@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-export const idSchema = z.string().uuid();
+/** MongoDB ObjectId as a 24-character hex string. */
+export const idSchema = z.string().regex(/^[a-f\d]{24}$/i, 'Invalid id');
 
 /** Whole minor units; see docs/adr/0002. */
 export const minorAmountSchema = z
