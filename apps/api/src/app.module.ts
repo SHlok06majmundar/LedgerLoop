@@ -12,6 +12,7 @@ import { HealthController } from './health/health.controller';
 import { LoggingModule } from './logging/logging.module';
 import { JobsModule } from './jobs/jobs.module';
 import { MailModule } from './mail/mail.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { StorageModule } from './storage/storage.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
@@ -35,6 +36,7 @@ import { ReconciliationModule } from './modules/reconciliation/reconciliation.mo
     MailModule,
     StorageModule,
     JobsModule,
+    NotificationsModule,
     SchedulerModule,
     IdempotencyModule,
     ThrottlerModule.forRoot({

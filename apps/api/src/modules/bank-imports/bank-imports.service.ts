@@ -12,6 +12,7 @@ import { paginate } from '../../database/paginate';
 import { JobQueue } from '../../jobs/job-queue.service';
 import { FileStorage, storageKeys } from '../../storage/file-storage';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   detectHeaderRow,
   fingerprintParts,
@@ -53,6 +54,7 @@ export class BankImportsService implements OnModuleInit {
     private readonly queue: JobQueue,
     private readonly audit: AuditLogsService,
     private readonly config: AppConfig,
+    private readonly notifications: NotificationsService,
   ) {}
 
   onModuleInit() {
@@ -238,6 +240,15 @@ export class BankImportsService implements OnModuleInit {
           failed: errors.length,
         },
       });
+      if (job.createdBy) {
+        await this.notifications.notify(job.createdBy, {
+          organizationId,
+          type: 'import.completed',
+          title: `Statement ${job.fileName} imported`,
+          body: `${counters.imported} new, ${counters.duplicates} duplicate, ${errors.length} failed rows`,
+          link: `/reconciliation/imports/${importJobId}`,
+        });
+      }
       if (counters.imported > 0) {
         await this.queue.enqueue(
           RECONCILE_JOB,

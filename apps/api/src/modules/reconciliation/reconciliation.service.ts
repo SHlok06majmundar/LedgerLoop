@@ -21,6 +21,7 @@ import {
 } from '../bank-imports/schemas/bank-transaction.schema';
 import { Customer } from '../customers/customer.schema';
 import { Invoice } from '../invoices/invoice.schema';
+import { NotificationsService } from '../notifications/notifications.service';
 import { MembershipsService } from '../organizations/memberships.service';
 import { PaymentsService } from '../payments/payments.service';
 import { Allocation } from '../payments/schemas/allocation.schema';
@@ -72,6 +73,7 @@ export class ReconciliationService implements OnModuleInit {
     private readonly queue: JobQueue,
     private readonly tx: TransactionRunner,
     private readonly audit: AuditLogsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   onModuleInit() {
@@ -599,6 +601,14 @@ export class ReconciliationService implements OnModuleInit {
         );
       }
       exception.assigneeId = input.assigneeId ? new Types.ObjectId(input.assigneeId) : null;
+      if (input.assigneeId && input.assigneeId !== RequestContext.get()?.userId) {
+        await this.notifications.notify(input.assigneeId, {
+          organizationId,
+          type: 'exception.assigned',
+          title: 'A reconciliation exception was assigned to you',
+          link: `/reconciliation/exceptions?highlight=${exceptionId}`,
+        });
+      }
     }
     if (input.comment) {
       exception.comments.push({ userId: actor()!, body: input.comment } as never);
