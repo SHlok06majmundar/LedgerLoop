@@ -1,5 +1,6 @@
 export * from './auth';
 export * from './bank-imports';
+export * from './collections';
 export * from './common';
 export * from './customers';
 export * from './invoices';
