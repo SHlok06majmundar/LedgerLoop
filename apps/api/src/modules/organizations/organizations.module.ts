@@ -20,6 +20,6 @@ import { Organization, OrganizationSchema } from './schemas/organization.schema'
   ],
   controllers: [OrganizationsController, InvitationsController],
   providers: [OrganizationsService, MembershipsService, InvitationsService],
-  exports: [OrganizationsService, MembershipsService],
+  exports: [OrganizationsService, MembershipsService, MongooseModule],
 })
 export class OrganizationsModule {}
