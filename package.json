@@ -30,12 +30,5 @@
     "ts-jest": "^29.4.15",
     "turbo": "^2.11.10",
     "typescript": "~5.8.3"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp",
-      "@nestjs/core",
-      "@node-rs/argon2"
-    ]
   }
 }

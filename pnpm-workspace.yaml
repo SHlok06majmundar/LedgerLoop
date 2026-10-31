@@ -2,3 +2,9 @@ packages:
   - "apps/*"
   - "packages/*"
   - "e2e"
+
+# Native packages allowed to run their install scripts.
+onlyBuiltDependencies:
+  - sharp
+  - '@nestjs/core'
+  - '@node-rs/argon2'
