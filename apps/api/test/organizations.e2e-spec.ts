@@ -302,6 +302,7 @@ describe('Organizations', () => {
         action: 'member.updated',
         before: expect.objectContaining({ role: 'STAFF' }),
         after: expect.objectContaining({ role: 'MANAGER' }),
+        userId: expect.objectContaining({ name: 'Test User', email: 'owner@example.com' }),
       });
     });
   });

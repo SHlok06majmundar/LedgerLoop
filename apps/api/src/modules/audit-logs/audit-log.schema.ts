@@ -7,7 +7,7 @@ export class AuditLog {
   @Prop({ type: SchemaTypes.ObjectId, required: true })
   organizationId!: Types.ObjectId;
 
-  @Prop({ type: SchemaTypes.ObjectId, default: null })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', default: null })
   userId!: Types.ObjectId | null;
 
   /** Dotted verb, e.g. `invoice.issued`. */
