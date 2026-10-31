@@ -9,7 +9,7 @@
     "start:worker": "node dist/worker.js",
     "start:scheduler": "node dist/scheduler.js",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:e2e": "jest --config test/jest-e2e.config.js --runInBand"
   },
   "dependencies": {

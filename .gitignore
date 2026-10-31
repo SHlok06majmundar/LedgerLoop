@@ -34,3 +34,4 @@ Thumbs.db
 
 # local uploads (permanent storage lives in object storage)
 uploads/
+uploads-test/

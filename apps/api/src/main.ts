@@ -1,19 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { configureApp } from './app.setup';
 import { AppConfig } from './config/app-config.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  const config = app.get(AppConfig);
-
-  app.setGlobalPrefix('api/v1', { exclude: ['health'] });
-  app.use(helmet());
-  app.use(cookieParser());
-  app.enableCors({ origin: config.get('WEB_ORIGINS'), credentials: true });
-  app.enableShutdownHooks();
+  configureApp(app);
 
   const openApi = new DocumentBuilder()
     .setTitle('LedgerLoop API')
@@ -24,7 +17,7 @@ async function bootstrap() {
     .build();
   SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, openApi));
 
-  await app.listen(config.get('PORT'));
+  await app.listen(app.get(AppConfig).get('PORT'));
 }
 
 void bootstrap();
