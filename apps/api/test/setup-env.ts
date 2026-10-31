@@ -9,3 +9,5 @@ process.env.NODE_ENV = 'test';
 process.env.MONGODB_DB = process.env.MONGODB_TEST_DB ?? 'ledgerloop_test';
 process.env.UPLOAD_DIR = join(__dirname, '..', 'uploads-test');
 process.env.LOG_LEVEL = 'error';
+process.env.RUN_WORKER = 'false';
+process.env.RUN_SCHEDULER = 'false';

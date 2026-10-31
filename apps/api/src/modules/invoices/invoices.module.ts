@@ -4,6 +4,7 @@ import { CustomersModule } from '../customers/customers.module';
 import { Invoice, InvoiceSchema } from './invoice.schema';
 import { InvoicesController } from './invoices.controller';
 import { InvoiceDocumentsService } from './invoice-documents.service';
+import { InvoiceJobs } from './invoice-jobs';
 import { InvoicesService } from './invoices.service';
 
 @Module({
@@ -12,7 +13,7 @@ import { InvoicesService } from './invoices.service';
     MongooseModule.forFeature([{ name: Invoice.name, schema: InvoiceSchema }]),
   ],
   controllers: [InvoicesController],
-  providers: [InvoicesService, InvoiceDocumentsService],
+  providers: [InvoicesService, InvoiceDocumentsService, InvoiceJobs],
   exports: [InvoicesService, InvoiceDocumentsService, MongooseModule],
 })
 export class InvoicesModule {}

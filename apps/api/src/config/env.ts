@@ -33,6 +33,11 @@ const envSchema = z.object({
   SMTP_PASS: z.string().min(1),
   EMAIL_FROM: z.string().min(3),
 
+  /** Run the job worker / scheduler inside this process (single-process deployments). */
+  RUN_WORKER: bool,
+  RUN_SCHEDULER: bool,
+  WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(20).default(2),
+
   SENTRY_DSN: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });
