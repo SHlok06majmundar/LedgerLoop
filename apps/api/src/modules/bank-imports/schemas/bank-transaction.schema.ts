@@ -35,6 +35,10 @@ export class BankTransaction {
   @Prop({ type: SchemaTypes.ObjectId, ref: 'Payment', default: null })
   paymentId!: Types.ObjectId | null;
 
+  /** Candidates a person rejected for this line; never suggested again. */
+  @Prop({ type: [String], default: [] })
+  rejectedKeys!: string[];
+
   createdAt!: Date;
 }
 
