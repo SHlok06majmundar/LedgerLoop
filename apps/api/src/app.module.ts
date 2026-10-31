@@ -5,10 +5,11 @@ import { ResponseEnvelopeInterceptor } from './common/interceptors/response-enve
 import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
+import { LoggingModule } from './logging/logging.module';
 import { MailModule } from './mail/mail.module';
 
 @Module({
-  imports: [ConfigModule, DatabaseModule, MailModule],
+  imports: [ConfigModule, LoggingModule, DatabaseModule, MailModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_FILTER, useClass: AllExceptionsFilter },
