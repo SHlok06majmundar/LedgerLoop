@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { Amount, Body, Button, Card, Empty, Label, Screen, StatusPill } from '@/components/ui';
 import { api, ApiError, apiPage } from '@/lib/api';
 import { date, money } from '@/lib/format';
+import { notify } from '@/lib/notify';
 import { useSession } from '@/lib/session';
 import type { Match } from '@/lib/types';
 import { useTheme } from '@/theme';
@@ -22,7 +23,7 @@ export default function ReconcileScreen() {
         body: approve ? undefined : { reason: 'Rejected from mobile app' },
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [organizationId] }),
-    onError: (e) => Alert.alert('Could not update match', e instanceof ApiError ? e.message : 'Try again'),
+    onError: (e) => notify('Could not update match', e instanceof ApiError ? e.message : 'Try again'),
   });
   const pending = (suggestions.data?.items ?? []).filter((m) => !m.decision);
 

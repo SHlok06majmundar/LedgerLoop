@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { Amount, Body, Button, Card, Chips, Input, Label, Row, Screen } from '@/components/ui';
 import { api, ApiError, apiPage, newIdempotencyKey } from '@/lib/api';
 import { date, money, parseMoneyInput, todayISO } from '@/lib/format';
+import { notify } from '@/lib/notify';
 import { useSession } from '@/lib/session';
 import type { Customer, Invoice } from '@/lib/types';
 
@@ -76,12 +77,12 @@ export default function NewPaymentScreen() {
       }),
     onSuccess: (p) => {
       void queryClient.invalidateQueries({ queryKey: [organizationId] });
-      Alert.alert('Payment recorded', `${p.paymentNumber} saved and applied to invoices.`);
+      notify('Payment recorded', `${p.paymentNumber} saved and applied to invoices.`);
       router.back();
     },
     onError: (e) => {
       key.current = newIdempotencyKey();
-      Alert.alert('Could not record payment', e instanceof ApiError ? e.message : 'Try again');
+      notify('Could not record payment', e instanceof ApiError ? e.message : 'Try again');
     },
   });
 
@@ -121,7 +122,12 @@ export default function NewPaymentScreen() {
           })
         )}
       </Card>
-      <Button title="Record payment" onPress={() => save.mutate()} loading={save.isPending} disabled={!amountMinor} />
+      <Button
+        title="Record payment"
+        onPress={() => save.mutate()}
+        loading={save.isPending}
+        disabled={!amountMinor || !open.isSuccess}
+      />
     </Screen>
   );
 }

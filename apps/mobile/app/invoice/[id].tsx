@@ -1,9 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 import { Amount, Body, Button, Card, Label, Loading, Screen, StatusPill, Title } from '@/components/ui';
 import { api, ApiError } from '@/lib/api';
 import { date, money } from '@/lib/format';
+import { notify } from '@/lib/notify';
 import { useSession } from '@/lib/session';
 import { refId, refName, type Invoice } from '@/lib/types';
 import { useTheme } from '@/theme';
@@ -17,8 +18,8 @@ export default function InvoiceScreen() {
   const invoice = useQuery({ queryKey: [organizationId, 'invoices', id], queryFn: () => api<Invoice>(`/invoices/${id}`) });
   const send = useMutation({
     mutationFn: () => api(`/invoices/${id}/send`, { method: 'POST', body: {} }),
-    onSuccess: () => Alert.alert('Invoice emailed', 'The PDF is on its way to the customer.'),
-    onError: (e) => Alert.alert('Could not send', e instanceof ApiError ? e.message : 'Try again'),
+    onSuccess: () => notify('Invoice emailed', 'The PDF is on its way to the customer.'),
+    onError: (e) => notify('Could not send', e instanceof ApiError ? e.message : 'Try again'),
   });
 
   if (invoice.isPending) return <Loading />;
