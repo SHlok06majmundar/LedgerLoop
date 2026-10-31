@@ -15,6 +15,13 @@ export class Organization {
   @Prop({ required: true, default: 'Asia/Kolkata' })
   timezone!: string;
 
+  /** Seller details printed on invoices. */
+  @Prop({ lowercase: true, trim: true }) email?: string;
+  @Prop({ trim: true }) phone?: string;
+  @Prop({ uppercase: true, trim: true }) gstin?: string;
+  @Prop({ trim: true }) address?: string;
+  @Prop() logoKey?: string;
+
   @Prop({ type: SchemaTypes.ObjectId, required: true })
   createdBy!: Types.ObjectId;
 

@@ -1,5 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { Permission } from '@ledgerloop/shared-types';
 import {
   createInvitationSchema,
@@ -18,6 +30,7 @@ import {
   type OrgAccess,
 } from '../../common/decorators/organization.decorator';
 import { ResponseMessage } from '../../common/decorators/response-message.decorator';
+import { unprocessable } from '../../common/errors/app-exception';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
 import { InvitationsService } from './invitations.service';
 import { MembershipsService } from './memberships.service';
@@ -72,6 +85,26 @@ export class OrganizationsController {
     @Body(new ZodValidationPipe(updateOrganizationSchema)) body: UpdateOrganizationInput,
   ) {
     return this.organizations.update(org.organizationId, body);
+  }
+
+  @Post(':id/logo')
+  @OrgParam(Permission.ORGANIZATION_MANAGE)
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 2 * 1024 * 1024 } }))
+  @ResponseMessage('Logo updated')
+  async uploadLogo(
+    @CurrentOrg() org: OrgAccess,
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    if (!file) throw unprocessable('FILE_REQUIRED', 'Attach an image in the "file" field');
+    return this.organizations.setLogo(org.organizationId, file);
+  }
+
+  @Get(':id/logo')
+  @OrgParam()
+  async logo(@CurrentOrg() org: OrgAccess) {
+    const file = await this.organizations.getLogo(org.organizationId);
+    return new StreamableFile(file.data, { type: file.contentType });
   }
 
   @Get(':id/members')

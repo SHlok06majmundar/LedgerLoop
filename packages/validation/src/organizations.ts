@@ -10,7 +10,18 @@ export const createOrganizationSchema = z.object({
 });
 export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;
 
-export const updateOrganizationSchema = createOrganizationSchema.partial();
+export const updateOrganizationSchema = createOrganizationSchema.partial().extend({
+  email: z.string().trim().toLowerCase().email().optional().or(z.literal('')),
+  phone: z.string().trim().max(30).optional(),
+  gstin: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, 'Invalid GSTIN')
+    .optional()
+    .or(z.literal('')),
+  address: z.string().trim().max(500).optional(),
+});
 export type UpdateOrganizationInput = z.infer<typeof updateOrganizationSchema>;
 
 export const createInvitationSchema = z.object({
