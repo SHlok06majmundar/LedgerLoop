@@ -26,7 +26,11 @@ export function tokenFromMail(t: TestApp, email: string): string {
   return match[1]!;
 }
 
-export async function registerUser(t: TestApp, email: string, name = 'Test User'): Promise<AuthedUser> {
+export async function registerUser(
+  t: TestApp,
+  email: string,
+  name = 'Test User',
+): Promise<AuthedUser> {
   const res = await t
     .http()
     .post('/api/v1/auth/register')
