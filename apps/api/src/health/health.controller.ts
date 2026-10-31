@@ -2,7 +2,9 @@ import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { ApiTags } from '@nestjs/swagger';
 import type { Connection } from 'mongoose';
+import { Public } from '../common/decorators/public.decorator';
 
+@Public()
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
