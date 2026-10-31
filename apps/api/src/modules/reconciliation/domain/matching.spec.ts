@@ -135,4 +135,23 @@ describe('evaluate', () => {
       detail: 'Bank reference HDFCN52026110512345 matches the payment reference',
     });
   });
+
+  it('never auto-matches one transfer split across several invoices', () => {
+    const group = invoice({
+      kind: 'INVOICE_GROUP',
+      key: 'inv1+inv2',
+      invoiceNumbers: ['INV-2026-0001', 'INV-2026-0002'],
+      invoiceIds: ['inv1', 'inv2'],
+      date: '2026-11-05',
+    });
+
+    const result = evaluate(
+      txn({ description: 'RTGS ABC TRADERS INV-2026-0001 INV-2026-0002', reference: undefined }),
+      [group],
+      DEFAULT_POLICY,
+    );
+
+    expect(result.best?.score).toBeGreaterThanOrEqual(90);
+    expect(result.status).toBe('SUGGESTED');
+  });
 });

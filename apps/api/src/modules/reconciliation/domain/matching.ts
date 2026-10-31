@@ -270,6 +270,8 @@ function decide(best: ScoredCandidate, policy: MatchPolicy): MatchOutcome {
   if (blocked('AMOUNT_MISMATCH') && hasReference) return 'DISCREPANCY';
   if (best.score < policy.suggestThreshold || blocked('AMOUNT_MISMATCH')) return 'UNMATCHED';
   if (best.partial) return 'PARTIALLY_MATCHED';
+  // Splitting one transfer across several invoices always gets a human check.
+  if (best.candidate.kind === 'INVOICE_GROUP') return 'SUGGESTED';
   if (best.score >= policy.autoMatchThreshold && best.blocks.length === 0) return 'MATCHED';
   return 'SUGGESTED';
 }
