@@ -75,3 +75,48 @@ export function invitationTemplate(
 export function plainTemplate(subject: string, title: string, paragraphs: string[]): Template {
   return { subject, ...layout(title, paragraphs) };
 }
+
+export interface InvoiceLine {
+  invoiceNumber: string;
+  dueDate: string;
+  amountDue: string;
+}
+
+const HEADLINES: Record<string, (org: string) => string> = {
+  INVOICE: (org) => `New invoice from ${org}`,
+  UPCOMING: () => 'Payment due soon',
+  DUE_TODAY: () => 'Payment due today',
+  OVERDUE: () => 'Payment overdue',
+  ESCALATION: () => 'Final reminder: payment overdue',
+  MANUAL: (org) => `A message from ${org}`,
+};
+
+/** Invoice delivery and reminder emails share one layout listing the invoices. */
+export function customerInvoiceTemplate(input: {
+  kind: string;
+  organizationName: string;
+  customerName: string;
+  invoices: InvoiceLine[];
+  message?: string;
+}): Template {
+  const headline = (HEADLINES[input.kind] ?? HEADLINES.MANUAL!)(input.organizationName);
+  const lines = input.invoices.map((i) => `${i.invoiceNumber}: ${i.amountDue} due ${i.dueDate}`);
+  const intro =
+    input.kind === 'INVOICE'
+      ? `Please find your invoice from ${input.organizationName} attached.`
+      : `This is a reminder about the following invoice${lines.length > 1 ? 's' : ''} from ${input.organizationName}.`;
+  const subject =
+    input.kind === 'INVOICE'
+      ? `Invoice ${input.invoices[0]?.invoiceNumber ?? ''} from ${input.organizationName}`
+      : `${headline}: ${input.invoices.map((i) => i.invoiceNumber).join(', ')}`;
+  return {
+    subject,
+    ...layout(headline, [
+      `Hi ${input.customerName},`,
+      intro,
+      ...lines,
+      ...(input.message ? [input.message] : []),
+      'If you have already paid, please ignore this message. Thank you.',
+    ]),
+  };
+}
