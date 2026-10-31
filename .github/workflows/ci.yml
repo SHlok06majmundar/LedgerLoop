@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build shared packages
+        run: pnpm --filter "./packages/*" build
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit tests
+        run: pnpm --filter @ledgerloop/shared-types test && pnpm --filter @ledgerloop/api test
+      - name: Build API and web
+        run: pnpm --filter @ledgerloop/api build && pnpm --filter @ledgerloop/web build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.example.com
+
+  api-e2e:
+    # Runs against a dedicated MongoDB test database; skipped until the secret exists.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_TEST_URI }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.MONGODB_URI != ''
+      - uses: pnpm/action-setup@v4
+        if: env.MONGODB_URI != ''
+      - uses: actions/setup-node@v4
+        if: env.MONGODB_URI != ''
+        with:
+          node-version: 22
+          cache: pnpm
+      - if: env.MONGODB_URI != ''
+        run: pnpm install --frozen-lockfile && pnpm --filter "./packages/*" build
+      - name: End-to-end API tests
+        if: env.MONGODB_URI != ''
+        working-directory: apps/api
+        env:
+          MONGODB_TEST_DB: ledgerloop_ci
+          JWT_ACCESS_SECRET: ci-only-secret-that-is-long-enough-for-validation
+          SMTP_HOST: localhost
+          SMTP_USER: ci
+          SMTP_PASS: ci
+          EMAIL_FROM: CI <ci@example.com>
+        run: pnpm test:e2e
