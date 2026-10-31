@@ -48,7 +48,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.respond(await this.auth.register(body, client(req)), res);
+    return this.respond(await this.auth.register(body, client(req)), req, res);
   }
 
   @Public()
@@ -61,7 +61,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.respond(await this.auth.login(body, client(req)), res);
+    return this.respond(await this.auth.login(body, client(req)), req, res);
   }
 
   @Public()
@@ -69,11 +69,11 @@ export class AuthController {
   @HttpCode(200)
   @ResponseMessage('Session refreshed')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const token = req.cookies?.[REFRESH_COOKIE] as string | undefined;
+    const token = refreshTokenOf(req);
     if (!token)
       throw unauthorized('INVALID_REFRESH_TOKEN', 'Session expired. Please sign in again.');
     try {
-      return this.respond(await this.auth.refresh(token, client(req)), res);
+      return this.respond(await this.auth.refresh(token, client(req)), req, res);
     } catch (err) {
       res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
       throw err;
@@ -89,7 +89,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    await this.auth.logout(user.sessionId, req.cookies?.[REFRESH_COOKIE] as string | undefined);
+    await this.auth.logout(user.sessionId, refreshTokenOf(req));
     res.clearCookie(REFRESH_COOKIE, this.cookieOptions());
     return null;
   }
@@ -174,12 +174,25 @@ export class AuthController {
     return null;
   }
 
-  private respond(result: AuthResult, res: Response) {
+  private respond(result: AuthResult, req: Request, res: Response) {
+    const session = {
+      user: result.user,
+      accessToken: result.accessToken,
+      expiresIn: result.expiresIn,
+    };
+    if (isMobile(req)) {
+      // Native apps keep the refresh token in secure device storage instead of a cookie.
+      return {
+        ...session,
+        refreshToken: result.refreshToken,
+        refreshExpiresAt: result.refreshExpiresAt,
+      };
+    }
     res.cookie(REFRESH_COOKIE, result.refreshToken, {
       ...this.cookieOptions(),
       expires: result.refreshExpiresAt,
     });
-    return { user: result.user, accessToken: result.accessToken, expiresIn: result.expiresIn };
+    return session;
   }
 
   private cookieOptions(): CookieOptions {
@@ -193,6 +206,18 @@ export class AuthController {
       path: '/api/v1/auth',
     };
   }
+}
+
+/** Native apps identify themselves so refresh tokens can travel in the body. */
+function isMobile(req: Request): boolean {
+  return req.header('x-client') === 'mobile';
+}
+
+function refreshTokenOf(req: Request): string | undefined {
+  const cookie = req.cookies?.[REFRESH_COOKIE] as string | undefined;
+  if (cookie) return cookie;
+  const body = req.body as { refreshToken?: unknown } | undefined;
+  return isMobile(req) && typeof body?.refreshToken === 'string' ? body.refreshToken : undefined;
 }
 
 function client(req: Request) {

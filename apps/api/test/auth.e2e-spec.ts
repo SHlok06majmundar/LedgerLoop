@@ -261,4 +261,64 @@ describe('Authentication', () => {
         .expect(200);
     });
   });
+
+  describe('mobile clients', () => {
+    const mobile = { 'X-Client': 'mobile' };
+
+    it('returns the refresh token in the body instead of a cookie', async () => {
+      await registerUser(t, 'phone@example.com');
+
+      const res = await t
+        .http()
+        .post('/api/v1/auth/login')
+        .set(mobile)
+        .send({ email: 'phone@example.com', password: PASSWORD })
+        .expect(200);
+
+      expect(res.body.data.refreshToken).toEqual(expect.any(String));
+      expect(res.headers['set-cookie']).toBeUndefined();
+    });
+
+    it('rotates a refresh token sent in the body', async () => {
+      await registerUser(t, 'phone@example.com');
+      const login = await t
+        .http()
+        .post('/api/v1/auth/login')
+        .set(mobile)
+        .send({ email: 'phone@example.com', password: PASSWORD })
+        .expect(200);
+
+      const refreshed = await t
+        .http()
+        .post('/api/v1/auth/refresh')
+        .set(mobile)
+        .send({ refreshToken: login.body.data.refreshToken })
+        .expect(200);
+      const reused = await t
+        .http()
+        .post('/api/v1/auth/refresh')
+        .set(mobile)
+        .send({ refreshToken: login.body.data.refreshToken })
+        .expect(401);
+
+      expect(refreshed.body.data.refreshToken).not.toBe(login.body.data.refreshToken);
+      expect(reused.body.errorCode).toBe('REFRESH_TOKEN_REUSED');
+    });
+
+    it('ignores body refresh tokens from browsers', async () => {
+      await registerUser(t, 'phone@example.com');
+      const login = await t
+        .http()
+        .post('/api/v1/auth/login')
+        .set(mobile)
+        .send({ email: 'phone@example.com', password: PASSWORD })
+        .expect(200);
+
+      await t
+        .http()
+        .post('/api/v1/auth/refresh')
+        .send({ refreshToken: login.body.data.refreshToken })
+        .expect(401);
+    });
+  });
 });
