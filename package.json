@@ -7,6 +7,12 @@
     "node": ">=22"
   },
   "scripts": {
+    "setup": "pnpm install && pnpm build:packages",
+    "build:packages": "pnpm --filter @ledgerloop/shared-types --filter @ledgerloop/validation build",
+    "dev:api": "pnpm --filter @ledgerloop/api dev",
+    "dev:web": "pnpm --filter @ledgerloop/web dev",
+    "dev:mobile": "pnpm --filter @ledgerloop/mobile dev",
+    "test:e2e": "pnpm --filter @ledgerloop/api build && pnpm --filter @ledgerloop/web build && pnpm --filter @ledgerloop/e2e test",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
@@ -24,5 +30,12 @@
     "ts-jest": "^29.4.15",
     "turbo": "^2.11.10",
     "typescript": "~5.8.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "@nestjs/core",
+      "@node-rs/argon2"
+    ]
   }
 }
