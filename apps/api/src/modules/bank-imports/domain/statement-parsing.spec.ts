@@ -1,4 +1,10 @@
-import { normalizeRow, parseAmount, parseStatementDate, suggestMapping } from './statement-parsing';
+import {
+  detectHeaderRow,
+  normalizeRow,
+  parseAmount,
+  parseStatementDate,
+  suggestMapping,
+} from './statement-parsing';
 
 describe('parseAmount', () => {
   it.each([
@@ -130,5 +136,19 @@ describe('suggestMapping', () => {
       reference: 'Reference',
       amount: 'Amount',
     });
+  });
+});
+
+describe('detectHeaderRow', () => {
+  it('skips a bank preamble to find the header row', () => {
+    const rows = [
+      ['HDFC BANK Ltd.'],
+      ['Account No : 50100012345678'],
+      [''],
+      ['Date', 'Narration', 'Chq./Ref.No.', 'Value Dt', 'Withdrawal Amt.', 'Deposit Amt.'],
+      ['05/11/26', 'NEFT CR', 'UTR1', '05/11/26', '', '1000.00'],
+    ];
+
+    expect(detectHeaderRow(rows)).toBe(3);
   });
 });

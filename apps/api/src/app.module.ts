@@ -16,6 +16,7 @@ import { SchedulerModule } from './scheduler/scheduler.module';
 import { StorageModule } from './storage/storage.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { BankImportsModule } from './modules/bank-imports/bank-imports.module';
 import { CommunicationsModule } from './modules/communications/communications.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
@@ -43,6 +44,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     InvoicesModule,
     PaymentsModule,
     CommunicationsModule,
+    BankImportsModule,
   ],
   controllers: [HealthController],
   providers: [

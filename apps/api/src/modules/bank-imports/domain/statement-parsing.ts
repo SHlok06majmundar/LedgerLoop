@@ -168,3 +168,28 @@ export function suggestMapping(headers: string[]): Partial<ColumnMapping> {
   }
   return mapping;
 }
+
+/** Finds the header row (0-based) in the first rows; bank exports often start with a preamble. */
+export function detectHeaderRow(rows: string[][], scan = 30): number {
+  for (let i = 0; i < Math.min(rows.length, scan); i++) {
+    const m = suggestMapping(rows[i]!.map((c) => c.trim()));
+    if (m.date && m.description && (m.amount || (m.debit && m.credit))) return i;
+  }
+  return 0;
+}
+
+/**
+ * Identity of a statement line for duplicate detection. `occurrence` counts
+ * identical lines earlier in the same file, so two genuine identical
+ * transfers both import, while re-importing the same file adds nothing.
+ */
+export function fingerprintParts(row: NormalizedRow, occurrence: number): string {
+  return [
+    row.transactionDate,
+    row.direction,
+    row.amountMinor,
+    (row.reference ?? '').toUpperCase().replace(/[^A-Z0-9]/g, ''),
+    row.description.toUpperCase().replace(/[^A-Z0-9]/g, ''),
+    occurrence,
+  ].join('|');
+}
