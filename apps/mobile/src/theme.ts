@@ -18,6 +18,7 @@ const light = {
   dangerSoft: '#fdece6',
   info: '#2563eb',
   infoSoft: '#e7effd',
+  skeletonHighlight: 'rgba(255,255,255,0.75)',
 };
 
 const dark: typeof light = {
@@ -38,6 +39,7 @@ const dark: typeof light = {
   dangerSoft: '#30180f',
   info: '#60a5fa',
   infoSoft: '#132036',
+  skeletonHighlight: 'rgba(255,255,255,0.08)',
 };
 
 export type Theme = typeof light;
