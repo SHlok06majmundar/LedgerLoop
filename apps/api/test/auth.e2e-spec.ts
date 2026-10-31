@@ -224,4 +224,41 @@ describe('Authentication', () => {
         .expect(200);
     });
   });
+
+  describe('profile', () => {
+    it('updates the display name', async () => {
+      const user = await registerUser(t, 'profile@example.com', 'Old Name');
+
+      const res = await t
+        .http()
+        .patch('/api/v1/auth/me')
+        .set(bearer(user))
+        .send({ name: 'New Name' })
+        .expect(200);
+
+      expect(res.body.data.name).toBe('New Name');
+    });
+
+    it('changes the password only with the current password', async () => {
+      const user = await registerUser(t, 'change@example.com');
+
+      await t
+        .http()
+        .post('/api/v1/auth/change-password')
+        .set(bearer(user))
+        .send({ currentPassword: 'Wrong-pass-123', newPassword: 'Another-pass-42' })
+        .expect(401);
+      await t
+        .http()
+        .post('/api/v1/auth/change-password')
+        .set(bearer(user))
+        .send({ currentPassword: PASSWORD, newPassword: 'Another-pass-42' })
+        .expect(200);
+      await t
+        .http()
+        .post('/api/v1/auth/login')
+        .send({ email: 'change@example.com', password: 'Another-pass-42' })
+        .expect(200);
+    });
+  });
 });

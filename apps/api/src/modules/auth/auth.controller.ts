@@ -1,16 +1,20 @@
-import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Patch, Post, Req, Res } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import {
+  changePasswordSchema,
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  updateProfileSchema,
   verifyEmailSchema,
+  type ChangePasswordInput,
   type ForgotPasswordInput,
   type LoginInput,
   type RegisterInput,
   type ResetPasswordInput,
+  type UpdateProfileInput,
   type VerifyEmailInput,
 } from '@ledgerloop/validation';
 import type { CookieOptions, Request, Response } from 'express';
@@ -145,6 +149,29 @@ export class AuthController {
   @Get('me')
   async me(@CurrentUser() user: AuthUser) {
     return toPublicUser(await this.users.getById(user.userId));
+  }
+
+  @ApiBearerAuth()
+  @Patch('me')
+  @ResponseMessage('Profile updated')
+  async updateMe(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(updateProfileSchema)) body: UpdateProfileInput,
+  ) {
+    return toPublicUser(await this.users.update(user.userId, { name: body.name }));
+  }
+
+  @ApiBearerAuth()
+  @Throttle(STRICT)
+  @Post('change-password')
+  @HttpCode(200)
+  @ResponseMessage('Password changed')
+  async changePassword(
+    @CurrentUser() user: AuthUser,
+    @Body(new ZodValidationPipe(changePasswordSchema)) body: ChangePasswordInput,
+  ) {
+    await this.auth.changePassword(user.userId, body.currentPassword, body.newPassword);
+    return null;
   }
 
   private respond(result: AuthResult, res: Response) {
