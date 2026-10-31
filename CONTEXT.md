@@ -81,6 +81,14 @@ A Match where the amounts disagree.
 
 ### Collections
 
+**Communication**:
+One email sent, or scheduled to be sent, to a Customer about their Invoices: an invoice delivery, a Reminder or a manual message. Failed Communications can be retried.
+_Avoid_: Message, notification (for customer email)
+
+**Notification**:
+An in-app alert for a Member, such as an import finishing or an Exception being assigned to them.
+_Avoid_: Alert, Communication
+
 **Reminder**:
 A message to a Customer about an Invoice that is coming due or overdue.
 _Avoid_: Dunning letter, notice
