@@ -21,7 +21,8 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-IN" suppressHydrationWarning className={inter.variable}>
-      <body className="min-h-dvh font-sans">
+      {/* Browser extensions (e.g. ColorZilla) add attributes to <body> before React loads. */}
+      <body className="min-h-dvh font-sans" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
