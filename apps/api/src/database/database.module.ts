@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import type { Connection } from 'mongoose';
 import { AppConfig } from '../config/app-config.service';
 import { jsonPlugin } from './json.plugin';
+import { SequenceService } from './sequence.service';
 import { TransactionRunner } from './transaction-runner';
 
 @Global()
@@ -21,7 +22,7 @@ import { TransactionRunner } from './transaction-runner';
       }),
     }),
   ],
-  providers: [TransactionRunner],
-  exports: [TransactionRunner],
+  providers: [TransactionRunner, SequenceService],
+  exports: [TransactionRunner, SequenceService],
 })
 export class DatabaseModule {}
