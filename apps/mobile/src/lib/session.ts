@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import { secureStorage } from './storage';
 import { create } from 'zustand';
 
 export interface SessionUser {
@@ -30,20 +30,20 @@ export const useSession = create<SessionState>((set) => ({
   organizationId: null,
   ready: false,
   setSession: async (accessToken, user, refreshToken) => {
-    await SecureStore.setItemAsync(REFRESH_KEY, refreshToken);
+    await secureStorage.set(REFRESH_KEY, refreshToken);
     set({ accessToken, user });
   },
   setOrganization: async (organizationId) => {
-    if (organizationId) await SecureStore.setItemAsync(ORG_KEY, organizationId);
-    else await SecureStore.deleteItemAsync(ORG_KEY);
+    if (organizationId) await secureStorage.set(ORG_KEY, organizationId);
+    else await secureStorage.remove(ORG_KEY);
     set({ organizationId });
   },
   clear: async () => {
-    await SecureStore.deleteItemAsync(REFRESH_KEY);
+    await secureStorage.remove(REFRESH_KEY);
     set({ accessToken: null, user: null });
   },
   markReady: () => set({ ready: true }),
 }));
 
-export const readRefreshToken = () => SecureStore.getItemAsync(REFRESH_KEY);
-export const readOrganizationId = () => SecureStore.getItemAsync(ORG_KEY);
+export const readRefreshToken = () => secureStorage.get(REFRESH_KEY);
+export const readOrganizationId = () => secureStorage.get(ORG_KEY);

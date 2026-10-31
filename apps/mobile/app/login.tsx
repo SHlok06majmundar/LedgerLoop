@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { Button, Input, SafeScreen } from '@/components/ui';
@@ -45,9 +46,7 @@ export default function LoginScreen() {
         <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" textContentType="password" onSubmitEditing={submit} />
         {error ? <Text style={{ color: t.danger }}>{error}</Text> : null}
         <Button title="Sign in" onPress={submit} loading={busy} disabled={!email || !password} />
-        <Text style={{ color: t.muted, textAlign: 'center', fontSize: 13 }}>
-          New to LedgerLoop? Create your account on the web, then sign in here.
-        </Text>
+        <Button title="Create an account" variant="outline" onPress={() => router.replace('/register')} />
       </KeyboardAvoidingView>
     </SafeScreen>
   );

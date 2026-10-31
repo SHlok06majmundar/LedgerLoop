@@ -19,6 +19,8 @@ function Navigator() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="register" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ title: 'Your business' }} />
       <Stack.Screen name="invoice/[id]" options={{ title: 'Invoice' }} />
       <Stack.Screen name="customer/[id]" options={{ title: 'Customer' }} />
       <Stack.Screen name="payment/new" options={{ title: 'Record payment', presentation: 'modal' }} />

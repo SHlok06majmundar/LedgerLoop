@@ -8,7 +8,7 @@ import { useSession } from '@/lib/session';
 export function SessionGate({ children }: { children: ReactNode }) {
   const router = useRouter();
   const segments = useSegments();
-  const { ready, accessToken, markReady } = useSession();
+  const { ready, accessToken, organizationId, markReady } = useSession();
 
   useEffect(() => {
     void restoreSession().finally(() => {
@@ -19,10 +19,16 @@ export function SessionGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!ready) return;
-    const onLogin = segments[0] === 'login';
-    if (!accessToken && !onLogin) router.replace('/login');
-    else if (accessToken && onLogin) router.replace('/');
-  }, [ready, accessToken, segments, router]);
+    const screen = segments[0];
+    const signedOutScreen = screen === 'login' || screen === 'register';
+    if (!accessToken) {
+      if (!signedOutScreen) router.replace('/login');
+    } else if (!organizationId) {
+      if (screen !== 'onboarding') router.replace('/onboarding');
+    } else if (signedOutScreen || screen === 'onboarding') {
+      router.replace('/');
+    }
+  }, [ready, accessToken, organizationId, segments, router]);
 
   return <>{children}</>;
 }

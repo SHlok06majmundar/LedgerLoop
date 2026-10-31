@@ -81,6 +81,21 @@ export async function signIn(email: string, password: string): Promise<void> {
   await useSession.getState().setSession(data.accessToken, data.user, data.refreshToken);
 }
 
+export async function signUp(name: string, email: string, password: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: { ...MOBILE, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, password }),
+  });
+  const body = await res.json();
+  if (!res.ok) {
+    const detail = Array.isArray(body.details) ? body.details[0]?.message : undefined;
+    throw new ApiError(res.status, body.errorCode, detail ?? body.message);
+  }
+  const data = body.data as AuthPayload;
+  await useSession.getState().setSession(data.accessToken, data.user, data.refreshToken);
+}
+
 export async function signOut(): Promise<void> {
   const refreshToken = await readRefreshToken();
   try {
