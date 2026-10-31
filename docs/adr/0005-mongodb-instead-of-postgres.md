@@ -1,0 +1,3 @@
+# MongoDB Atlas instead of PostgreSQL
+
+The original spec chose PostgreSQL with Prisma; we use MongoDB Atlas with Mongoose because that is the database the team operates. The integrity rules the spec gets from SQL are kept explicitly: multi-document transactions on the Atlas replica set for payment writes, unique compound indexes for invoice numbers, memberships and imported transaction fingerprints, and `organizationId` as a required field and leading index key on every tenant collection. Mongoose was chosen over Prisma's MongoDB connector because the over-allocation guard needs conditional `$inc` updates with `$expr` filters, which Prisma cannot express.
