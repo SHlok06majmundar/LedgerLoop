@@ -22,6 +22,7 @@ import { CustomersModule } from './modules/customers/customers.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { PaymentsModule } from './modules/payments/payments.module';
+import { ReconciliationModule } from './modules/reconciliation/reconciliation.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     PaymentsModule,
     CommunicationsModule,
     BankImportsModule,
+    ReconciliationModule,
   ],
   controllers: [HealthController],
   providers: [
