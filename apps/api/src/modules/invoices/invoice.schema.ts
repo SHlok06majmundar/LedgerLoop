@@ -71,6 +71,9 @@ export class Invoice {
   @Prop({ type: Date, default: null }) paidAt!: Date | null;
   @Prop() pdfKey?: string;
 
+  /** Stops automated reminders for this invoice only. */
+  @Prop({ default: false }) remindersPaused!: boolean;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

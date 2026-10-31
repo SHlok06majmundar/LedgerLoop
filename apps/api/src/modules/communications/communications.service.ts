@@ -145,6 +145,8 @@ export class CommunicationsService implements OnModuleInit {
     ) {
       return;
     }
+    // Rescheduled to later: the job queued for the new time will deliver it.
+    if (communication.scheduledAt.getTime() > Date.now() + 1000) return;
     const organizationId = communication.organizationId.toString();
     try {
       const [organization, customer, invoices] = await Promise.all([
