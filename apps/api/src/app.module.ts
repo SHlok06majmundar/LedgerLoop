@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
+import { IdempotencyModule } from './common/idempotency/idempotency.module';
 import { AccessTokenGuard } from './common/guards/access-token.guard';
 import { OrganizationGuard } from './common/guards/organization.guard';
 import { ResponseEnvelopeInterceptor } from './common/interceptors/response-envelope.interceptor';
@@ -22,6 +23,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     LoggingModule,
     DatabaseModule,
     MailModule,
+    IdempotencyModule,
     ThrottlerModule.forRoot({
       throttlers: [{ limit: 300, ttl: 60_000 }],
       skipIf: () => process.env.NODE_ENV === 'test',
