@@ -45,3 +45,40 @@ export async function registerUser(
 }
 
 export const bearer = (user: AuthedUser) => ({ Authorization: `Bearer ${user.accessToken}` });
+
+export interface OrgContext {
+  owner: AuthedUser;
+  orgId: string;
+  /** Bearer + X-Organization-Id headers for header-scoped routes. */
+  headers: Record<string, string>;
+}
+
+export async function setupOrg(
+  t: TestApp,
+  email = 'owner@example.com',
+  name = 'ABC Traders',
+): Promise<OrgContext> {
+  const owner = await registerUser(t, email);
+  const res = await t
+    .http()
+    .post('/api/v1/organizations')
+    .set(bearer(owner))
+    .send({ name })
+    .expect(201);
+  const orgId = res.body.data.id as string;
+  return { owner, orgId, headers: { ...bearer(owner), 'X-Organization-Id': orgId } };
+}
+
+/** Invites a new user with the given role and returns headers acting as them. */
+export async function addMember(t: TestApp, ctx: OrgContext, email: string, role: string) {
+  const user = await registerUser(t, email);
+  await t
+    .http()
+    .post(`/api/v1/organizations/${ctx.orgId}/invitations`)
+    .set(bearer(ctx.owner))
+    .send({ email, role })
+    .expect(201);
+  const token = tokenFromMail(t, email);
+  await t.http().post('/api/v1/invitations/accept').set(bearer(user)).send({ token }).expect(200);
+  return { ...bearer(user), 'X-Organization-Id': ctx.orgId };
+}

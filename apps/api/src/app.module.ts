@@ -12,6 +12,7 @@ import { LoggingModule } from './logging/logging.module';
 import { MailModule } from './mail/mail.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CustomersModule } from './modules/customers/customers.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 
 @Module({
@@ -27,6 +28,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     AuditLogsModule,
     AuthModule,
     OrganizationsModule,
+    CustomersModule,
   ],
   controllers: [HealthController],
   providers: [
