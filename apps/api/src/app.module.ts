@@ -9,6 +9,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
 import { LoggingModule } from './logging/logging.module';
 import { MailModule } from './mail/mail.module';
+import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { AuthModule } from './modules/auth/auth.module';
       throttlers: [{ limit: 300, ttl: 60_000 }],
       skipIf: () => process.env.NODE_ENV === 'test',
     }),
+    AuditLogsModule,
     AuthModule,
   ],
   controllers: [HealthController],

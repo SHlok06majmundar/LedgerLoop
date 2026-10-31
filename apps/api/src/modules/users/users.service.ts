@@ -28,13 +28,20 @@ export function toPublicUser(user: UserDocument): PublicUser {
 export class UsersService {
   constructor(@InjectModel(User.name) private readonly users: Model<User>) {}
 
-  async create(input: { name: string; email: string; passwordHash: string }): Promise<UserDocument> {
+  async create(input: {
+    name: string;
+    email: string;
+    passwordHash: string;
+  }): Promise<UserDocument> {
     const [user] = await this.users.create([input]);
     return user!;
   }
 
   findById(id: string, session?: ClientSession): Promise<UserDocument | null> {
-    return this.users.findById(id).session(session ?? null).exec();
+    return this.users
+      .findById(id)
+      .session(session ?? null)
+      .exec();
   }
 
   async getById(id: string): Promise<UserDocument> {

@@ -66,7 +66,8 @@ export class AuthController {
   @ResponseMessage('Session refreshed')
   async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token = req.cookies?.[REFRESH_COOKIE] as string | undefined;
-    if (!token) throw unauthorized('INVALID_REFRESH_TOKEN', 'Session expired. Please sign in again.');
+    if (!token)
+      throw unauthorized('INVALID_REFRESH_TOKEN', 'Session expired. Please sign in again.');
     try {
       return this.respond(await this.auth.refresh(token, client(req)), res);
     } catch (err) {
@@ -104,7 +105,9 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(200)
   @ResponseMessage('If that email has an account, a reset link is on its way')
-  async forgotPassword(@Body(new ZodValidationPipe(forgotPasswordSchema)) body: ForgotPasswordInput) {
+  async forgotPassword(
+    @Body(new ZodValidationPipe(forgotPasswordSchema)) body: ForgotPasswordInput,
+  ) {
     await this.auth.forgotPassword(body.email);
     return null;
   }

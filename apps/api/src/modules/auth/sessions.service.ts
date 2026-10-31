@@ -89,7 +89,11 @@ export class SessionsService {
     await this.sessions.updateMany({ familyId, revokedAt: null }, { revokedAt: new Date() });
   }
 
-  private async issue(userId: string, familyId: string, client: ClientInfo): Promise<IssuedSession> {
+  private async issue(
+    userId: string,
+    familyId: string,
+    client: ClientInfo,
+  ): Promise<IssuedSession> {
     const refreshToken = randomToken(48);
     const expiresAt = new Date(Date.now() + this.config.get('REFRESH_TOKEN_TTL_DAYS') * 86_400_000);
     const session = await this.sessions.create({

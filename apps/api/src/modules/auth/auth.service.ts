@@ -1,11 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { hash, verify } from '@node-rs/argon2';
-import type {
-  LoginInput,
-  RegisterInput,
-  ResetPasswordInput,
-} from '@ledgerloop/validation';
+import type { LoginInput, RegisterInput, ResetPasswordInput } from '@ledgerloop/validation';
 import { conflict, unauthorized } from '../../common/errors/app-exception';
 import { AppConfig } from '../../config/app-config.service';
 import { Mailer } from '../../mail/mailer';
@@ -116,7 +112,11 @@ export class AuthService {
   async forgotPassword(email: string): Promise<void> {
     const user = await this.users.findByEmail(email);
     if (!user?.isActive) return;
-    const token = await this.actionTokens.issue(user.id as string, ActionTokenType.RESET_PASSWORD, 60);
+    const token = await this.actionTokens.issue(
+      user.id as string,
+      ActionTokenType.RESET_PASSWORD,
+      60,
+    );
     const url = `${this.config.get('APP_URL')}/reset-password?token=${token}`;
     await this.deliver(user.email, resetPasswordTemplate(user.name, url));
   }
@@ -127,7 +127,11 @@ export class AuthService {
     await this.sessions.revokeAll(userId);
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = await this.users.getById(userId);
     const withHash = await this.users.findByEmailWithPassword(user.email);
     if (!withHash || !(await verify(withHash.passwordHash, currentPassword).catch(() => false))) {
@@ -148,7 +152,10 @@ export class AuthService {
 
   private accessToken(userId: string, sessionId: string) {
     const payload: AccessTokenPayload = { sub: userId, sid: sessionId };
-    return { accessToken: this.jwt.sign(payload), expiresIn: this.config.get('JWT_ACCESS_TTL_SECONDS') };
+    return {
+      accessToken: this.jwt.sign(payload),
+      expiresIn: this.config.get('JWT_ACCESS_TTL_SECONDS'),
+    };
   }
 
   /** Auth emails must not fail the request when SMTP hiccups; the user can resend. */

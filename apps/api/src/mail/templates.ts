@@ -18,9 +18,12 @@ function layout(title: string, paragraphs: string[], action?: { label: string; u
 <p style="margin:0 0 24px;font-weight:700;color:#0f766e">LedgerLoop</p>
 <h1 style="font-size:20px;margin:0 0 16px">${escape(title)}</h1>${body}${button}
 </div></body></html>`;
-  const text = [title, '', ...paragraphs, ...(action ? ['', `${action.label}: ${action.url}`] : [])].join(
-    '\n',
-  );
+  const text = [
+    title,
+    '',
+    ...paragraphs,
+    ...(action ? ['', `${action.label}: ${action.url}`] : []),
+  ].join('\n');
   return { html, text };
 }
 
@@ -50,7 +53,12 @@ export function resetPasswordTemplate(name: string, url: string): Template {
   };
 }
 
-export function invitationTemplate(orgName: string, inviterName: string, role: string, url: string): Template {
+export function invitationTemplate(
+  orgName: string,
+  inviterName: string,
+  role: string,
+  url: string,
+): Template {
   return {
     subject: `You're invited to ${orgName} on LedgerLoop`,
     ...layout(
