@@ -70,10 +70,19 @@ export function calculateInvoiceTotals(lines: LineInput[]): InvoiceTotals {
 
   return {
     lines: lineTotals,
-    subtotalMinor: toSafeNumber(sum((l) => l.amountMinor), 'subtotalMinor'),
+    subtotalMinor: toSafeNumber(
+      sum((l) => l.amountMinor),
+      'subtotalMinor',
+    ),
     discountMinor: toSafeNumber(discount, 'discountMinor'),
-    taxMinor: toSafeNumber(sum((l) => l.taxMinor), 'taxMinor'),
-    totalMinor: toSafeNumber(sum((l) => l.totalMinor), 'totalMinor'),
+    taxMinor: toSafeNumber(
+      sum((l) => l.taxMinor),
+      'taxMinor',
+    ),
+    totalMinor: toSafeNumber(
+      sum((l) => l.totalMinor),
+      'totalMinor',
+    ),
   };
 }
 

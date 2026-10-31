@@ -42,7 +42,7 @@ export const PaymentStatus = {
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus];
 
 export const ImportJobStatus = {
-  PENDING_UPLOAD: 'PENDING_UPLOAD',
+  AWAITING_MAPPING: 'AWAITING_MAPPING',
   QUEUED: 'QUEUED',
   PROCESSING: 'PROCESSING',
   COMPLETED: 'COMPLETED',
