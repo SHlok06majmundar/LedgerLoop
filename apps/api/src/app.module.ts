@@ -11,6 +11,7 @@ import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
 import { LoggingModule } from './logging/logging.module';
 import { MailModule } from './mail/mail.module';
+import { StorageModule } from './storage/storage.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CustomersModule } from './modules/customers/customers.module';
@@ -24,6 +25,7 @@ import { PaymentsModule } from './modules/payments/payments.module';
     LoggingModule,
     DatabaseModule,
     MailModule,
+    StorageModule,
     IdempotencyModule,
     ThrottlerModule.forRoot({
       throttlers: [{ limit: 300, ttl: 60_000 }],
