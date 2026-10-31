@@ -232,7 +232,7 @@ test('updates profile, organization details and invites a teammate', async () =>
   await page.getByLabel('Email').fill(invitee);
   await page.getByRole('button', { name: 'Send invite' }).click();
   await expectToast(page, `Invitation sent to ${invitee}`);
-  await expect(page.getByText(invitee)).toBeVisible();
+  await expect(page.getByRole('cell', { name: invitee })).toBeVisible();
   await page.getByRole('button', { name: 'Revoke' }).click();
   await expectToast(page, 'Invitation revoked');
 
