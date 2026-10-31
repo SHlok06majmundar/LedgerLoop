@@ -35,3 +35,11 @@ Thumbs.db
 # local uploads (permanent storage lives in object storage)
 uploads/
 uploads-test/
+
+# expo / react native
+.expo/
+expo-env.d.ts
+apps/mobile/android/
+apps/mobile/ios/
+*.jks
+*.keystore

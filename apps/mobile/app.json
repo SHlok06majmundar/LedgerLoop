@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "LedgerLoop",
+    "slug": "ledgerloop",
+    "scheme": "ledgerloop",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.ledgerloop.mobile"
+    },
+    "android": {
+      "package": "app.ledgerloop.mobile",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0f766e",
+          "dark": { "backgroundColor": "#111827" }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
