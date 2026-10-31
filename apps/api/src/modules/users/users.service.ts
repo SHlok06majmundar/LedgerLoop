@@ -10,6 +10,7 @@ export interface PublicUser {
   email: string;
   emailVerified: boolean;
   isActive: boolean;
+  isSuperAdmin: boolean;
   createdAt: Date;
 }
 
@@ -20,6 +21,7 @@ export function toPublicUser(user: UserDocument): PublicUser {
     email: user.email,
     emailVerified: user.emailVerifiedAt !== null,
     isActive: user.isActive,
+    isSuperAdmin: user.isSuperAdmin ?? false,
     createdAt: user.createdAt,
   };
 }

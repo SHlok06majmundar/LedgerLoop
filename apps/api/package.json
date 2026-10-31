@@ -9,6 +9,7 @@
     "start:worker": "node dist/worker.js",
     "dev:worker": "nest start --watch --entryFile worker",
     "start:scheduler": "node dist/scheduler.js",
+    "admin:promote": "node dist/scripts/promote-super-admin.js",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
     "test:e2e": "jest --config test/jest-e2e.config.js --runInBand"

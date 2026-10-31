@@ -15,6 +15,10 @@ export class User {
   @Prop({ default: true })
   isActive!: boolean;
 
+  /** Platform operator with access to the admin panel. */
+  @Prop({ default: false })
+  isSuperAdmin!: boolean;
+
   @Prop({ type: Date, default: null })
   emailVerifiedAt!: Date | null;
 
