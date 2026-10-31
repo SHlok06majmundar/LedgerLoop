@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>LedgerLoop glyph</title>
+  <!-- Two interlocking loops: an invoice and the payment that closes it.
+       The pale loop passes over the white one at the top crossing and under it at the bottom. -->
+  <circle cx="304" cy="256" r="100" fill="none" stroke="#a7dcd6" stroke-width="40"/>
+  <circle cx="208" cy="256" r="100" fill="none" stroke="#ffffff" stroke-width="40"/>
+  <path d="M242.4 177.2A100 100 0 0 1 273.1 160.9" fill="none" stroke="#0f766e" stroke-width="60"/>
+  <path d="M227.4 191.7A100 100 0 0 1 293.5 156.5" fill="none" stroke="#a7dcd6" stroke-width="40"/>
+</svg>
