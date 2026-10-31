@@ -34,10 +34,13 @@ interface AuthPayload {
 
 const MOBILE = { 'X-Client': 'mobile' };
 let refreshing: Promise<boolean> | null = null;
+/** Bumped on sign-out so late refresh responses are discarded. */
+let sessionGeneration = 0;
 
 /** Exchanges the stored refresh token (rotating it) for a new access token. */
 export function refreshSession(): Promise<boolean> {
   refreshing ??= (async () => {
+    const generation = sessionGeneration;
     try {
       const refreshToken = await readRefreshToken();
       if (!refreshToken) return false;
@@ -46,11 +49,14 @@ export function refreshSession(): Promise<boolean> {
         headers: { ...MOBILE, 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
       });
+      // Signed out while this refresh was in flight: do not bring the session back.
+      if (generation !== sessionGeneration) return false;
       if (!res.ok) {
         await useSession.getState().clear();
         return false;
       }
       const { data } = (await res.json()) as { data: AuthPayload };
+      if (generation !== sessionGeneration) return false;
       await useSession.getState().setSession(data.accessToken, data.user, data.refreshToken);
       return true;
     } catch {
@@ -97,12 +103,15 @@ export async function signUp(name: string, email: string, password: string): Pro
 }
 
 export async function signOut(): Promise<void> {
+  // Let a refresh that is already running finish so the server revokes the current token.
+  if (refreshing) await refreshing;
   const refreshToken = await readRefreshToken();
   try {
     await api('/auth/logout', { method: 'POST', body: { refreshToken }, noOrg: true });
   } catch {
     // Already signed out on the server; clearing the device is what matters.
   }
+  sessionGeneration++;
   await useSession.getState().clear();
 }
 
