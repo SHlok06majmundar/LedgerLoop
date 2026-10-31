@@ -16,6 +16,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { InvoicesModule } from './modules/invoices/invoices.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
+import { PaymentsModule } from './modules/payments/payments.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     OrganizationsModule,
     CustomersModule,
     InvoicesModule,
+    PaymentsModule,
   ],
   controllers: [HealthController],
   providers: [
