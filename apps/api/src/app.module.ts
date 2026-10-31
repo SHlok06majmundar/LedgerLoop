@@ -13,6 +13,7 @@ import { MailModule } from './mail/mail.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CustomersModule } from './modules/customers/customers.module';
+import { InvoicesModule } from './modules/invoices/invoices.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 
 @Module({
@@ -29,6 +30,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     AuthModule,
     OrganizationsModule,
     CustomersModule,
+    InvoicesModule,
   ],
   controllers: [HealthController],
   providers: [

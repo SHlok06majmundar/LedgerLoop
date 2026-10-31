@@ -4,8 +4,12 @@ describe('deriveStatus', () => {
   const issued = { status: 'ISSUED' as const, totalMinor: 10_000, dueDate: '2026-11-15' };
 
   it('keeps drafts and voided invoices as they are', () => {
-    expect(deriveStatus({ ...issued, status: 'DRAFT', allocatedMinor: 0 }, '2026-12-01')).toBe('DRAFT');
-    expect(deriveStatus({ ...issued, status: 'VOID', allocatedMinor: 0 }, '2026-12-01')).toBe('VOID');
+    expect(deriveStatus({ ...issued, status: 'DRAFT', allocatedMinor: 0 }, '2026-12-01')).toBe(
+      'DRAFT',
+    );
+    expect(deriveStatus({ ...issued, status: 'VOID', allocatedMinor: 0 }, '2026-12-01')).toBe(
+      'VOID',
+    );
   });
 
   it('is issued while unpaid and not yet due', () => {
@@ -26,7 +30,9 @@ describe('deriveStatus', () => {
   });
 
   it('goes back to issued when a reversal removes all allocations', () => {
-    expect(deriveStatus({ ...issued, status: 'PAID', allocatedMinor: 0 }, '2026-11-01')).toBe('ISSUED');
+    expect(deriveStatus({ ...issued, status: 'PAID', allocatedMinor: 0 }, '2026-11-01')).toBe(
+      'ISSUED',
+    );
   });
 });
 
