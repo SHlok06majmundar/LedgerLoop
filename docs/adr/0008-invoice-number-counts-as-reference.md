@@ -1,0 +1,3 @@
+# An invoice number in the narration counts as the reference signal
+
+The spec scores reference 40, amount 25, customer 20, date 10 and invoice number 5. Applied literally, a customer who transfers the exact amount and writes the invoice number in the narration scores about 54 and stays unmatched, which is the most common way Indian B2B customers pay. For invoice candidates we therefore award the 40-point reference signal when the narration names the invoice, and keep the 5-point invoice-number signal for recorded payments whose invoices are named. Such matches top out below the 90-point automatic threshold unless the dates align exactly, so a person still approves most of them.
