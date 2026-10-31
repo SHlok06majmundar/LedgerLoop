@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { SkeletonList } from '@/components/skeleton';
 import { Button, Card, Empty, Label, Row, Screen } from '@/components/ui';
 import { api, apiPage } from '@/lib/api';
 import { date } from '@/lib/format';
@@ -27,7 +28,9 @@ export default function NotificationsScreen() {
       {(list.data?.meta.unread ?? 0) > 0 && (
         <Button title="Mark all as read" variant="outline" onPress={() => readAll.mutate()} loading={readAll.isPending} />
       )}
-      {list.data?.items.length ? (
+      {list.isPending ? (
+        <SkeletonList rows={5} />
+      ) : list.data?.items.length ? (
         <Card style={{ paddingVertical: 4 }}>
           {list.data.items.map((n) => (
             <Row key={n.id} title={`${n.readAt ? '' : '● '}${n.title}`} subtitle={n.body ?? date(n.createdAt)} />

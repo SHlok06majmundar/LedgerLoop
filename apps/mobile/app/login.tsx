@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
-import { Button, Input, SafeScreen } from '@/components/ui';
+import { Button, Input, LogoBadge, SafeScreen } from '@/components/ui';
 import { api, ApiError, signIn } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import { useTheme } from '@/theme';
@@ -38,7 +38,9 @@ export default function LoginScreen() {
     <SafeScreen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 16 }}>
         <View style={{ gap: 6, marginBottom: 12 }}>
-          <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: t.primary, marginBottom: 12 }} />
+          <View style={{ marginBottom: 12 }}>
+            <LogoBadge />
+          </View>
           <Text style={{ color: t.text, fontSize: 28, fontWeight: '700' }}>LedgerLoop</Text>
           <Text style={{ color: t.muted, fontSize: 15 }}>Sign in to see what is owed and what has been paid.</Text>
         </View>

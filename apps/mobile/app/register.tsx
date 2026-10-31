@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, Text } from 'react-native';
-import { Button, Input, SafeScreen } from '@/components/ui';
+import { Button, Input, LogoBadge, SafeScreen } from '@/components/ui';
 import { ApiError, signUp } from '@/lib/api';
 import { useTheme } from '@/theme';
 
@@ -29,7 +29,11 @@ export default function RegisterScreen() {
   return (
     <SafeScreen>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: 16 }}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: 16 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <LogoBadge />
           <Text style={{ color: t.text, fontSize: 28, fontWeight: '700' }}>Create your account</Text>
           <Text style={{ color: t.muted, fontSize: 15 }}>Free to start. You can invite your team later.</Text>
           <Input label="Full name" value={name} onChangeText={setName} autoComplete="name" />

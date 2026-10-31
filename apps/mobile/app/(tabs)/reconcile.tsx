@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { View } from 'react-native';
+import { Skeleton } from '@/components/skeleton';
 import { Amount, Body, Button, Card, Empty, Label, Screen, StatusPill } from '@/components/ui';
 import { api, ApiError, apiPage } from '@/lib/api';
 import { date, money } from '@/lib/format';
@@ -30,6 +31,7 @@ export default function ReconcileScreen() {
   return (
     <Screen refreshing={suggestions.isFetching} onRefresh={() => void suggestions.refetch()}>
       <Label>Suggested matches waiting for approval</Label>
+      {suggestions.isPending && [0, 1, 2].map((i) => <Skeleton key={i} height={190} radius={14} />)}
       {pending.length === 0 && !suggestions.isPending ? (
         <Empty icon="checkmark-done-outline" title="All caught up" hint="New suggestions appear after you import a bank statement on the web." />
       ) : null}

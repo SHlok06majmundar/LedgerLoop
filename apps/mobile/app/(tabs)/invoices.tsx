@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { Amount, Chips, Empty, Loading, Row, StatusPill } from '@/components/ui';
+import { SkeletonList } from '@/components/skeleton';
+import { Amount, Chips, Empty, Row, StatusPill } from '@/components/ui';
 import { apiPage } from '@/lib/api';
 import { date, money } from '@/lib/format';
 import { useSession } from '@/lib/session';
@@ -31,7 +32,7 @@ export default function InvoicesScreen() {
         <Chips value={status} options={FILTERS} onChange={setStatus} />
       </View>
       {query.isPending ? (
-        <Loading />
+        <SkeletonList />
       ) : (
         <FlatList
           data={query.data?.items ?? []}

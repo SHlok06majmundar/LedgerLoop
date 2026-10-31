@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, RefreshControl, TextInput, View } from 'react-native';
-import { Empty, Loading, Row } from '@/components/ui';
+import { SkeletonList } from '@/components/skeleton';
+import { Empty, Row } from '@/components/ui';
 import { apiPage } from '@/lib/api';
 import { useSession } from '@/lib/session';
 import type { Customer } from '@/lib/types';
@@ -31,7 +32,7 @@ export default function CustomersScreen() {
         />
       </View>
       {query.isPending ? (
-        <Loading />
+        <SkeletonList />
       ) : (
         <FlatList
           data={query.data?.items ?? []}

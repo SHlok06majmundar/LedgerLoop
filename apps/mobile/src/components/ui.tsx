@@ -2,6 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps, ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,6 +18,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { humanize } from '@/lib/format';
 import { statusColors, useTheme } from '@/theme';
+import { SkeletonDetail } from './skeleton';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -33,14 +37,23 @@ export function Screen({
   if (!scroll) {
     return <View style={{ flex: 1, backgroundColor: t.background, padding: 16 }}>{children}</View>;
   }
+  // Forms live inside every screen, so every screen keeps focused inputs above the keyboard.
   return (
-    <ScrollView
+    <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: t.background }}
-      contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
-      refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={t.primary} /> : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      {children}
-    </ScrollView>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={t.primary} /> : undefined}
+      >
+        {children}
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -193,12 +206,18 @@ export function Empty({ icon = 'file-tray-outline', title, hint }: { icon?: Icon
   );
 }
 
+/** Detail-screen placeholder with a shimmer while data loads. */
 export function Loading() {
-  const t = useTheme();
+  return <SkeletonDetail />;
+}
+
+export function LogoBadge({ size = 56 }: { size?: number }) {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, backgroundColor: t.background }}>
-      <ActivityIndicator color={t.primary} />
-    </View>
+    <Image
+      source={require('../../assets/logo.png')}
+      style={{ width: size, height: size, borderRadius: size * 0.23 }}
+      accessibilityLabel="LedgerLoop logo"
+    />
   );
 }
 

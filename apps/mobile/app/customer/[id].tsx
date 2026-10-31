@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Linking, View } from 'react-native';
+import { Skeleton } from '@/components/skeleton';
 import { Amount, Body, Button, Card, Label, Loading, Row, Screen, StatusPill, Title } from '@/components/ui';
 import { api, apiPage } from '@/lib/api';
 import { date, money } from '@/lib/format';
@@ -38,11 +39,11 @@ export default function CustomerScreen() {
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <Card style={{ flex: 1 }}>
           <Label>Outstanding</Label>
-          <Amount size={18}>{money(s?.outstandingMinor)}</Amount>
+          {s ? <Amount size={18}>{money(s.outstandingMinor)}</Amount> : <Skeleton width="80%" height={22} />}
         </Card>
         <Card style={{ flex: 1 }}>
           <Label>Overdue</Label>
-          <Amount size={18} color={t.danger}>{money(s?.overdueMinor)}</Amount>
+          {s ? <Amount size={18} color={t.danger}>{money(s.overdueMinor)}</Amount> : <Skeleton width="80%" height={22} />}
         </Card>
       </View>
       <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -64,7 +65,9 @@ export default function CustomerScreen() {
       />
       <Body bold>Open invoices</Body>
       <Card style={{ paddingVertical: 4 }}>
-        {(invoices.data?.items ?? []).length === 0 ? (
+        {invoices.isPending ? (
+          <Skeleton height={60} style={{ marginVertical: 8 }} />
+        ) : (invoices.data?.items ?? []).length === 0 ? (
           <Label>No open invoices.</Label>
         ) : (
           invoices.data!.items.map((inv) => (

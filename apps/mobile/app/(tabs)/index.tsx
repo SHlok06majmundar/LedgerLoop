@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { View } from 'react-native';
+import { Skeleton } from '@/components/skeleton';
 import { Amount, Body, Button, Card, Label, Screen, Title } from '@/components/ui';
 import { api } from '@/lib/api';
 import { money } from '@/lib/format';
@@ -48,18 +49,18 @@ export default function HomeScreen() {
       <Title>Hi {user?.name.split(' ')[0]}</Title>
       <Card>
         <Label>Total outstanding</Label>
-        <Amount size={30}>{money(k?.totalOutstandingMinor, c)}</Amount>
+        {k ? <Amount size={30}>{money(k.totalOutstandingMinor, c)}</Amount> : <Skeleton width="60%" height={34} style={{ marginVertical: 4 }} />}
         <Label>{k ? `${k.partiallyPaidInvoices} partially paid invoices` : ' '}</Label>
       </Card>
       <View style={{ flexDirection: 'row', gap: 12 }}>
         <Card style={{ flex: 1 }}>
           <Label>Overdue</Label>
-          <Amount size={18} color={t.danger}>{money(k?.overdueMinor, c)}</Amount>
+          {k ? <Amount size={18} color={t.danger}>{money(k.overdueMinor, c)}</Amount> : <Skeleton width="80%" height={22} style={{ marginVertical: 2 }} />}
           <Label>{k?.overdueInvoices ?? 0} invoices</Label>
         </Card>
         <Card style={{ flex: 1 }}>
           <Label>Received</Label>
-          <Amount size={18} color={t.success}>{money(k?.totalReceivedMinor, c)}</Amount>
+          {k ? <Amount size={18} color={t.success}>{money(k.totalReceivedMinor, c)}</Amount> : <Skeleton width="80%" height={22} style={{ marginVertical: 2 }} />}
           <Label>{k ? `${(k.collectionRateBps / 100).toFixed(1)}% collected` : ' '}</Label>
         </Card>
       </View>
@@ -73,6 +74,7 @@ export default function HomeScreen() {
       )}
       <Card style={{ gap: 12 }}>
         <Body bold>Outstanding by age</Body>
+        {!aging.data && [0, 1, 2, 3, 4].map((i) => <Skeleton key={i} height={26} />)}
         {(aging.data?.buckets ?? []).map((b) => (
           <View key={b.bucket} style={{ gap: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
