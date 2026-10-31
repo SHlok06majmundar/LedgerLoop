@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  StreamableFile,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Permission } from '@ledgerloop/shared-types';
 import {
@@ -19,6 +29,7 @@ import {
 } from '../../common/decorators/organization.decorator';
 import { ResponseMessage } from '../../common/decorators/response-message.decorator';
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe';
+import { InvoiceDocumentsService } from './invoice-documents.service';
 import { InvoicesService } from './invoices.service';
 
 const IdParam = new ZodValidationPipe(idSchema);
@@ -28,7 +39,10 @@ const IdParam = new ZodValidationPipe(idSchema);
 @ApiSecurity('organization')
 @Controller('invoices')
 export class InvoicesController {
-  constructor(private readonly invoices: InvoicesService) {}
+  constructor(
+    private readonly invoices: InvoicesService,
+    private readonly documents: InvoiceDocumentsService,
+  ) {}
 
   @Post()
   @RequirePermission(Permission.INVOICES_WRITE)
@@ -84,5 +98,15 @@ export class InvoicesController {
     @Body(new ZodValidationPipe(voidInvoiceSchema)) body: VoidInvoiceInput,
   ) {
     return this.invoices.void(org.organizationId, id, body.reason);
+  }
+
+  @Get(':id/pdf')
+  @RequirePermission(Permission.INVOICES_READ)
+  async pdf(@CurrentOrg() org: OrgAccess, @Param('id', IdParam) id: string) {
+    const pdf = await this.documents.pdf(org.organizationId, id);
+    return new StreamableFile(pdf.data, {
+      type: 'application/pdf',
+      disposition: `attachment; filename="${pdf.fileName}"`,
+    });
   }
 }
