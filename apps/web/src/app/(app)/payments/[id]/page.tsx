@@ -2,7 +2,7 @@
 
 import { Permission } from '@ledgerloop/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link2, Undo2 } from 'lucide-react';
+import { Link2, Pencil, Undo2 } from 'lucide-react';
 import Link from 'next/link';
 import { use, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { ActivityFeed } from '@/components/app/activity-feed';
 import { PageHeader } from '@/components/app/page-header';
 import { StatTile } from '@/components/app/stat-tile';
 import { AllocationEditor, allocationLines, type AllocationDraft } from '@/components/payments/allocation-editor';
+import { EditPaymentDialog } from '@/components/payments/edit-payment-dialog';
 import { StatusBadge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +35,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   const [draft, setDraft] = useState<AllocationDraft>({});
   const [reversal, setReversal] = useState<{ allocationId?: string; label: string } | null>(null);
   const [reason, setReason] = useState('');
+  const [editing, setEditing] = useState(false);
   const key = useRef(newIdempotencyKey());
 
   const payment = useQuery({ queryKey: useOrgQueryKey('payments', id), queryFn: () => api<Payment>(`/payments/${id}`) });
@@ -102,11 +104,19 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
           </>
         }
         actions={
-          posted &&
-          canReverse && (
-            <Button variant="outline" onClick={() => setReversal({ label: 'the whole payment' })}>
-              <Undo2 /> Reverse payment
-            </Button>
+          posted && (
+            <>
+              {canWrite && (
+                <Button variant="outline" onClick={() => setEditing(true)}>
+                  <Pencil /> Edit details
+                </Button>
+              )}
+              {canReverse && (
+                <Button variant="outline" onClick={() => setReversal({ label: 'the whole payment' })}>
+                  <Undo2 /> Reverse payment
+                </Button>
+              )}
+            </>
           )
         }
       />
@@ -237,6 +247,8 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
       </div>
+
+      {editing && <EditPaymentDialog payment={p} open={editing} onOpenChange={setEditing} />}
 
       <Dialog open={reversal !== null} onOpenChange={(o) => !o && setReversal(null)}>
         <DialogContent

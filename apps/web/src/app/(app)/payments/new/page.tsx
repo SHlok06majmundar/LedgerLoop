@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/app/page-header';
 import { CustomerSelect } from '@/components/customers/customer-select';
 import { AllocationEditor, allocationLines, type AllocationDraft } from '@/components/payments/allocation-editor';
+import { PAYMENT_METHODS } from '@/components/payments/payment-methods';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, Input, NativeSelect, Textarea } from '@/components/ui/input';
@@ -15,16 +16,6 @@ import { applyApiError } from '@/lib/auth';
 import { parseMoneyInput, todayISO } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import type { Payment } from '@/lib/types';
-
-const METHODS = [
-  ['UPI', 'UPI'],
-  ['NEFT', 'NEFT'],
-  ['RTGS', 'RTGS'],
-  ['IMPS', 'IMPS'],
-  ['BANK_TRANSFER', 'Bank transfer'],
-  ['CHEQUE', 'Cheque'],
-  ['CASH', 'Cash'],
-];
 
 function RecordPayment() {
   const params = useSearchParams();
@@ -112,7 +103,7 @@ function RecordPayment() {
               </Field>
               <Field label="Method" htmlFor="method">
                 <NativeSelect id="method" value={method} onChange={(e) => setMethod(e.target.value)}>
-                  {METHODS.map(([v, l]) => (
+                  {PAYMENT_METHODS.map(([v, l]) => (
                     <option key={v} value={v}>
                       {l}
                     </option>
