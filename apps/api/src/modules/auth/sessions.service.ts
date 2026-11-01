@@ -33,7 +33,9 @@ export class SessionsService {
 
   /**
    * Exchanges a refresh token for a new one. Presenting a token that was
-   * already rotated means it leaked, so the whole family is revoked.
+   * already rotated means it leaked, so the whole family is revoked, unless it
+   * was rotated moments ago: then the client most likely never received the
+   * response (a page navigation aborted it), so it gets a fresh sibling token.
    */
   async rotate(refreshToken: string, client: ClientInfo): Promise<IssuedSession> {
     const current = await this.sessions.findOne({ tokenHash: sha256(refreshToken) }).exec();
@@ -41,6 +43,9 @@ export class SessionsService {
       throw unauthorized('INVALID_REFRESH_TOKEN', 'Session expired. Please sign in again.');
     }
     if (current.revokedAt) {
+      if (current.replacedBy && this.withinReuseGrace(current.revokedAt)) {
+        return this.issue(current.userId.toString(), current.familyId, client);
+      }
       if (current.replacedBy) await this.revokeFamily(current.familyId);
       throw unauthorized('REFRESH_TOKEN_REUSED', 'Session expired. Please sign in again.');
     }
@@ -53,11 +58,18 @@ export class SessionsService {
       )
       .exec();
     if (claimed.modifiedCount === 0) {
-      // A concurrent refresh won the race; treat this attempt as reuse.
+      // A concurrent refresh won the race just now: the same grace applies,
+      // unless the token was revoked (logout) rather than rotated.
+      const winner = await this.sessions.findById(current._id).select('replacedBy revokedAt').lean().exec();
+      if (winner?.replacedBy && winner.revokedAt && this.withinReuseGrace(winner.revokedAt)) return next;
       await this.revokeFamily(current.familyId);
       throw unauthorized('REFRESH_TOKEN_REUSED', 'Session expired. Please sign in again.');
     }
     return next;
+  }
+
+  private withinReuseGrace(rotatedAt: Date): boolean {
+    return Date.now() - rotatedAt.getTime() < this.config.get('REFRESH_REUSE_GRACE_SECONDS') * 1000;
   }
 
   async isActive(sessionId: string): Promise<boolean> {

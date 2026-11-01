@@ -1,3 +1,6 @@
+import { getModelToken } from '@nestjs/mongoose';
+import type { Model } from 'mongoose';
+import { Session } from '../src/modules/auth/schemas/session.schema';
 import { PASSWORD, bearer, refreshCookieOf, registerUser, tokenFromMail } from './helpers';
 import { createTestApp, type TestApp } from './test-app';
 
@@ -9,6 +12,13 @@ describe('Authentication', () => {
   });
   beforeEach(() => t.reset());
   afterAll(() => t.close());
+
+  /** Moves every rotation an hour into the past, beyond the reuse grace window. */
+  const ageRotations = () =>
+    t.app
+      .get<Model<Session>>(getModelToken(Session.name))
+      .updateMany({ replacedBy: { $ne: null } }, { revokedAt: new Date(Date.now() - 3_600_000) })
+      .exec();
 
   describe('registration', () => {
     it('creates an account, signs the user in and sends a verification email', async () => {
@@ -119,6 +129,7 @@ describe('Authentication', () => {
         .set('Cookie', user.refreshCookie)
         .expect(200);
       const newCookie = refreshCookieOf(rotated);
+      await ageRotations();
 
       const reuse = await t
         .http()
@@ -133,6 +144,17 @@ describe('Authentication', () => {
         .get('/api/v1/auth/me')
         .set('Authorization', `Bearer ${rotated.body.data.accessToken}`)
         .expect(401);
+    });
+
+    it('re-issues a just-rotated token whose response never reached the client', async () => {
+      const user = await registerUser(t, 'aborted@example.com');
+      const lost = await t.http().post('/api/v1/auth/refresh').set('Cookie', user.refreshCookie).expect(200);
+
+      const retry = await t.http().post('/api/v1/auth/refresh').set('Cookie', user.refreshCookie).expect(200);
+
+      expect(refreshCookieOf(retry)).not.toBe(refreshCookieOf(lost));
+      await t.http().post('/api/v1/auth/refresh').set('Cookie', refreshCookieOf(retry)).expect(200);
+      await t.http().get('/api/v1/auth/me').set('Authorization', `Bearer ${lost.body.data.accessToken}`).expect(200);
     });
 
     it('logout ends only the current session', async () => {
@@ -294,6 +316,7 @@ describe('Authentication', () => {
         .set(mobile)
         .send({ refreshToken: login.body.data.refreshToken })
         .expect(200);
+      await ageRotations();
       const reused = await t
         .http()
         .post('/api/v1/auth/refresh')

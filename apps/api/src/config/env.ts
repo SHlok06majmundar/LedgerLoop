@@ -21,6 +21,8 @@ const envSchema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_ACCESS_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  /** A rotated refresh token still works this long, for responses lost to aborted requests. */
+  REFRESH_REUSE_GRACE_SECONDS: z.coerce.number().int().nonnegative().default(30),
   COOKIE_DOMAIN: z.string().optional(),
 
   UPLOAD_DIR: z.string().default('uploads'),
