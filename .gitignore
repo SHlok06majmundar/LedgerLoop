@@ -49,5 +49,5 @@ e2e/test-results/
 e2e/playwright-report/
 
 # guided walkthrough output (contains account data)
-walkthrough/
+/walkthrough/
 .next-dev/
