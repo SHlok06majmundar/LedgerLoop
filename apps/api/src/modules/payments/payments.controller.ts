@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Permission } from '@ledgerloop/shared-types';
 import {
@@ -8,11 +8,13 @@ import {
   listInvoicesQuerySchema,
   listPaymentsQuerySchema,
   reversePaymentSchema,
+  updatePaymentSchema,
   type AllocatePaymentInput,
   type CreatePaymentInput,
   type ListInvoicesQuery,
   type ListPaymentsQuery,
   type ReversePaymentInput,
+  type UpdatePaymentInput,
 } from '@ledgerloop/validation';
 import {
   CurrentOrg,
@@ -59,6 +61,17 @@ export class PaymentsController {
   @RequirePermission(Permission.PAYMENTS_READ)
   get(@CurrentOrg() org: OrgAccess, @Param('id', IdParam) id: string) {
     return this.payments.getDetailed(org.organizationId, id);
+  }
+
+  @Patch(':id')
+  @RequirePermission(Permission.PAYMENTS_WRITE)
+  @ResponseMessage('Payment updated')
+  update(
+    @CurrentOrg() org: OrgAccess,
+    @Param('id', IdParam) id: string,
+    @Body(new ZodValidationPipe(updatePaymentSchema)) body: UpdatePaymentInput,
+  ) {
+    return this.payments.update(org.organizationId, id, body);
   }
 
   @Post(':id/allocations')

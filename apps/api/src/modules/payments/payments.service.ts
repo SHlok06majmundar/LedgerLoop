@@ -6,6 +6,7 @@ import type {
   CreatePaymentInput,
   ListPaymentsQuery,
   ReversePaymentInput,
+  UpdatePaymentInput,
 } from '@ledgerloop/validation';
 import { mongo, Types, type ClientSession, type FilterQuery, type Model } from 'mongoose';
 import { RequestContext } from '../../common/context/request-context';
@@ -114,6 +115,52 @@ export class PaymentsService {
       }
     });
     return this.getDetailed(organizationId, paymentId);
+  }
+
+  /**
+   * Corrects how a posted payment is described. Money (amount, customer) only
+   * changes through a reversal, and a bank-matched payment keeps the bank's date.
+   */
+  async update(organizationId: string, paymentId: string, input: UpdatePaymentInput) {
+    return this.tx.run(async (session) => {
+      const payment = await this.get(organizationId, paymentId, session);
+      if (payment.status === PaymentStatus.REVERSED) {
+        throw unprocessable('PAYMENT_REVERSED', 'A reversed payment cannot be edited');
+      }
+      if (
+        input.paymentDate &&
+        payment.bankTransactionId &&
+        input.paymentDate !== payment.paymentDate
+      ) {
+        throw unprocessable(
+          'PAYMENT_FROM_BANK',
+          'The date of a bank-matched payment comes from the statement',
+        );
+      }
+      if (input.reference && input.reference !== payment.reference) {
+        await this.assertReferenceFree(organizationId, input.reference, session);
+      }
+      const before = {
+        method: payment.method,
+        reference: payment.reference,
+        paymentDate: payment.paymentDate,
+        notes: payment.notes,
+      };
+      payment.set(input);
+      await payment.save({ session });
+      await this.audit.record(
+        {
+          organizationId,
+          action: 'payment.updated',
+          entityType: 'Payment',
+          entityId: payment._id,
+          before,
+          after: input,
+        },
+        session,
+      );
+      return payment;
+    });
   }
 
   /** Reverses one allocation, or the whole payment when no allocation is given. */

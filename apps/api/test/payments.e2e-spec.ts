@@ -276,6 +276,53 @@ describe('Payments and allocations', () => {
     });
   });
 
+  it('edits the details of a payment but never its amount', async () => {
+    const payment = await recordPayment({ amountMinor: 50_000, reference: 'UTR1' }).expect(201);
+    const id = payment.body.data.id as string;
+
+    const edited = await t
+      .http()
+      .patch(`/api/v1/payments/${id}`)
+      .set(ctx.headers)
+      .send({ reference: 'utr-corrected', method: 'RTGS', notes: 'Typo in UTR' })
+      .expect(200);
+    const amount = await t
+      .http()
+      .patch(`/api/v1/payments/${id}`)
+      .set(ctx.headers)
+      .send({ amountMinor: 1 })
+      .expect(400);
+
+    expect(edited.body.data).toMatchObject({
+      reference: 'UTR-CORRECTED',
+      method: 'RTGS',
+      notes: 'Typo in UTR',
+      amountMinor: 50_000,
+    });
+    expect(amount.body.errorCode).toBe('VALIDATION_FAILED');
+  });
+
+  it('refuses to edit a reversed payment', async () => {
+    const payment = await recordPayment({ amountMinor: 50_000 }).expect(201);
+    const id = payment.body.data.id as string;
+    await t
+      .http()
+      .post(`/api/v1/payments/${id}/reversals`)
+      .set(ctx.headers)
+      .set('Idempotency-Key', randomUUID())
+      .send({ reason: 'Bounced cheque' })
+      .expect(201);
+
+    const res = await t
+      .http()
+      .patch(`/api/v1/payments/${id}`)
+      .set(ctx.headers)
+      .send({ notes: 'late note' })
+      .expect(422);
+
+    expect(res.body.errorCode).toBe('PAYMENT_REVERSED');
+  });
+
   it('summarizes a customer account', async () => {
     const inv1 = await issuedInvoice(30_000);
     await issuedInvoice(20_000);

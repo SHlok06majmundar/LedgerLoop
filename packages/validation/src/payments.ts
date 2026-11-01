@@ -48,6 +48,13 @@ export const createPaymentSchema = z.object({
 });
 export type CreatePaymentInput = z.infer<typeof createPaymentSchema>;
 
+/** Corrects how a payment is described; the amount and customer change only by reversal. */
+export const updatePaymentSchema = createPaymentSchema
+  .pick({ method: true, reference: true, paymentDate: true, notes: true })
+  .partial()
+  .strict();
+export type UpdatePaymentInput = z.infer<typeof updatePaymentSchema>;
+
 export const allocatePaymentSchema = z.object({ allocations: allocationList });
 export type AllocatePaymentInput = z.infer<typeof allocatePaymentSchema>;
 
