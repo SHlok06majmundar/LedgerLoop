@@ -45,6 +45,12 @@
     "experiments": {
       "typedRoutes": true
     },
-    "icon": "./assets/icon.png"
+    "icon": "./assets/icon.png",
+    "extra": {
+      "eas": {
+        "projectId": "ee6d05dd-67a1-487b-bca2-e08e83c7b84d"
+      }
+    },
+    "owner": "shlok060405"
   }
 }
