@@ -1,14 +1,25 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Ban, MoreHorizontal, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { ConfirmDeleteDialog } from '@/components/admin/confirm-delete-dialog';
 import { Pagination, SearchInput } from '@/components/app/list';
 import { PageHeader } from '@/components/app/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogFooter } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { TableSkeleton } from '@/components/ui/feedback';
+import { Field, Input } from '@/components/ui/input';
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table';
 import { api, apiPage } from '@/lib/api';
 import { applyApiError } from '@/lib/auth';
@@ -36,19 +47,29 @@ export default function AdminOrganizationsPage() {
     queryFn: () => apiPage<AdminOrg>('/admin/organizations', { query: { search, page, limit: 25 }, noOrg: true }),
     placeholderData: (prev) => prev,
   });
-  const toggle = useMutation({
-    mutationFn: (org: AdminOrg) =>
-      api(`/admin/organizations/${org.id}`, { method: 'PATCH', body: { isSuspended: !org.isSuspended }, noOrg: true }),
-    onSuccess: (_, org) => {
-      toast.success(org.isSuspended ? `${org.name} restored` : `${org.name} suspended`);
-      void queryClient.invalidateQueries({ queryKey: ['admin'] });
-    },
+  const [renaming, setRenaming] = useState<{ org: AdminOrg; name: string } | null>(null);
+  const [deleting, setDeleting] = useState<AdminOrg | null>(null);
+  const done = (message: string) => {
+    toast.success(message);
+    setRenaming(null);
+    setDeleting(null);
+    void queryClient.invalidateQueries({ queryKey: ['admin'] });
+  };
+  const update = useMutation({
+    mutationFn: ({ org, body }: { org: AdminOrg; body: { name?: string; isSuspended?: boolean }; message: string }) =>
+      api(`/admin/organizations/${org.id}`, { method: 'PATCH', body, noOrg: true }),
+    onSuccess: (_, v) => done(v.message),
+    onError: (e) => applyApiError(e),
+  });
+  const remove = useMutation({
+    mutationFn: (org: AdminOrg) => api(`/admin/organizations/${org.id}`, { method: 'DELETE', noOrg: true }),
+    onSuccess: (_, org) => done(`${org.name} deleted`),
     onError: (e) => applyApiError(e),
   });
 
   return (
     <>
-      <PageHeader title="Organizations" description="Suspending an organization immediately blocks its members." />
+      <PageHeader title="Organizations" description="Suspending blocks members until you restore it. Deleting removes it from LedgerLoop for good; its records are kept for audit." />
       <Card>
         <div className="border-b p-4">
           <SearchInput
@@ -94,9 +115,33 @@ export default function AdminOrganizationsPage() {
                     <TD className="text-right tabular">{money(o.outstandingMinor, o.currency)}</TD>
                     <TD className="text-muted-foreground">{date(o.createdAt)}</TD>
                     <TD className="text-right">
-                      <Button size="sm" variant={o.isSuspended ? 'outline' : 'ghost'} loading={toggle.isPending && toggle.variables?.id === o.id} onClick={() => toggle.mutate(o)}>
-                        {o.isSuspended ? 'Restore' : 'Suspend'}
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" aria-label={`Actions for ${o.name}`}>
+                            <MoreHorizontal />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onSelect={() => setRenaming({ org: o, name: o.name })}>
+                            <Pencil /> Rename
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              update.mutate({
+                                org: o,
+                                body: { isSuspended: !o.isSuspended },
+                                message: o.isSuspended ? `${o.name} restored` : `${o.name} suspended`,
+                              })
+                            }
+                          >
+                            {o.isSuspended ? <RotateCcw /> : <Ban />} {o.isSuspended ? 'Restore access' : 'Suspend'}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-danger" onSelect={() => setDeleting(o)}>
+                            <Trash2 /> Delete organization
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TD>
                   </TR>
                 ))}
@@ -106,6 +151,44 @@ export default function AdminOrganizationsPage() {
           </>
         )}
       </Card>
+
+      <Dialog open={renaming !== null} onOpenChange={(o) => !o && setRenaming(null)}>
+        <DialogContent title="Rename organization" description="Members see the new name right away.">
+          <Field label="Name" htmlFor="org-name">
+            <Input
+              id="org-name"
+              value={renaming?.name ?? ''}
+              onChange={(e) => setRenaming((r) => r && { ...r, name: e.target.value })}
+            />
+          </Field>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenaming(null)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!renaming || renaming.name.trim().length < 2}
+              loading={update.isPending}
+              onClick={() =>
+                renaming &&
+                update.mutate({ org: renaming.org, body: { name: renaming.name.trim() }, message: 'Organization renamed' })
+              }
+            >
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDeleteDialog
+        open={deleting !== null}
+        onOpenChange={(o) => !o && setDeleting(null)}
+        title={`Delete ${deleting?.name ?? ''}?`}
+        description="Every member loses access immediately and the organization disappears from all lists. Its invoices, payments and audit log are kept for the record."
+        confirmText={deleting?.name ?? ''}
+        actionLabel="Delete organization"
+        loading={remove.isPending}
+        onConfirm={() => deleting && remove.mutate(deleting)}
+      />
     </>
   );
 }
