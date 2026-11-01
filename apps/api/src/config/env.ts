@@ -24,6 +24,8 @@ const envSchema = z.object({
   /** A rotated refresh token still works this long, for responses lost to aborted requests. */
   REFRESH_REUSE_GRACE_SECONDS: z.coerce.number().int().nonnegative().default(30),
   COOKIE_DOMAIN: z.string().optional(),
+  /** Load balancers in front of the API (1 on Render), so client IPs come from X-Forwarded-For. */
+  TRUST_PROXY_HOPS: z.coerce.number().int().nonnegative().default(0),
 
   UPLOAD_DIR: z.string().default('uploads'),
   MAX_UPLOAD_MB: z.coerce.number().positive().default(10),
