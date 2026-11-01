@@ -171,6 +171,22 @@ describe('Invoices', () => {
     expect(again.body.errorCode).toBe('INVOICE_NOT_VOIDABLE');
   });
 
+  it('deletes a draft, but an issued invoice can only be voided', async () => {
+    const first = await draft().expect(201);
+    const second = await draft().expect(201);
+    await issue(second.body.data.id).expect(200);
+
+    await t.http().delete(`/api/v1/invoices/${first.body.data.id}`).set(ctx.headers).expect(200);
+    const issued = await t
+      .http()
+      .delete(`/api/v1/invoices/${second.body.data.id}`)
+      .set(ctx.headers)
+      .expect(422);
+
+    await t.http().get(`/api/v1/invoices/${first.body.data.id}`).set(ctx.headers).expect(404);
+    expect(issued.body.errorCode).toBe('INVOICE_NOT_DELETABLE');
+  });
+
   it('filters the list by status and customer', async () => {
     const a = await draft().expect(201);
     await draft().expect(201);

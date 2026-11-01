@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
@@ -98,6 +99,14 @@ export class InvoicesController {
     @Body(new ZodValidationPipe(voidInvoiceSchema)) body: VoidInvoiceInput,
   ) {
     return this.invoices.void(org.organizationId, id, body.reason);
+  }
+
+  @Delete(':id')
+  @RequirePermission(Permission.INVOICES_WRITE)
+  @ResponseMessage('Draft deleted')
+  async remove(@CurrentOrg() org: OrgAccess, @Param('id', IdParam) id: string) {
+    await this.invoices.remove(org.organizationId, id);
+    return null;
   }
 
   @Get(':id/pdf')

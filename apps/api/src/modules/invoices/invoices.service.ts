@@ -181,6 +181,33 @@ export class InvoicesService {
     });
   }
 
+  /**
+   * Deletes a draft. Issued invoices are legal records, so they are voided
+   * instead; the audit log keeps the deleted draft's number.
+   */
+  async remove(organizationId: string, invoiceId: string) {
+    await this.tx.run(async (session) => {
+      const invoice = await this.get(organizationId, invoiceId, session);
+      if (invoice.status !== InvoiceStatus.DRAFT) {
+        throw unprocessable(
+          'INVOICE_NOT_DELETABLE',
+          'Only drafts can be deleted; void an issued invoice instead',
+        );
+      }
+      await invoice.deleteOne({ session });
+      await this.audit.record(
+        {
+          organizationId,
+          action: 'invoice.deleted',
+          entityType: 'Invoice',
+          entityId: invoice._id,
+          before: invoice,
+        },
+        session,
+      );
+    });
+  }
+
   /** Voiding is only allowed while nothing is allocated; reverse allocations first. */
   async void(organizationId: string, invoiceId: string, reason: string) {
     return this.tx.run(async (session) => {
