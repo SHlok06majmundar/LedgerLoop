@@ -23,7 +23,10 @@ function Navigator() {
       <Stack.Screen name="onboarding" options={{ title: 'Your business' }} />
       <Stack.Screen name="invoice/[id]" options={{ title: 'Invoice' }} />
       <Stack.Screen name="customer/[id]" options={{ title: 'Customer' }} />
+      <Stack.Screen name="customer/form" options={{ title: 'Customer', presentation: 'modal' }} />
       <Stack.Screen name="payment/new" options={{ title: 'Record payment', presentation: 'modal' }} />
+      <Stack.Screen name="payment/[id]" options={{ title: 'Payment' }} />
+      <Stack.Screen name="payments" options={{ title: 'Payments' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
     </Stack>
   );

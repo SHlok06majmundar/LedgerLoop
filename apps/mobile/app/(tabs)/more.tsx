@@ -26,6 +26,7 @@ export default function MoreScreen() {
       </Card>
       <Card style={{ paddingVertical: 4 }}>
         <Row title="Notifications" onPress={() => router.push('/notifications')} />
+        <Row title="Payments" onPress={() => router.push('/payments')} />
         <Row title="Record a payment" onPress={() => router.push('/payment/new')} />
       </Card>
       <Label>Organizations</Label>
