@@ -10,6 +10,7 @@ export default defineConfig({
   testDir: './screens',
   timeout: 600_000,
   expect: { timeout: 30_000 },
+  use: { actionTimeout: 30_000 },
   workers: 1,
   reporter: 'list',
   projects: [

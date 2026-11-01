@@ -36,7 +36,7 @@ test('app screens', async ({ page }) => {
   await shown(page.getByText('Invoices', { exact: true })).click();
   await shot(page, 'invoices-open');
   for (const filter of ['Overdue', 'Paid', 'All']) {
-    await shown(page.getByText(filter, { exact: true })).click();
+    await shown(page.getByRole('tab', { name: filter, exact: true })).click();
     await shot(page, `invoices-${filter.toLowerCase()}`);
   }
   const invoiceRow = shown(page.getByText(/INV-\d{4}-\d{4}/));
