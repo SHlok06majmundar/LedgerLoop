@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { idSchema, paginationQuerySchema, type PaginationQuery } from '@ledgerloop/validation';
 import { z } from 'zod';
@@ -9,8 +9,18 @@ import { AdminService } from './admin.service';
 import { SuperAdminGuard } from './super-admin.guard';
 
 const IdParam = new ZodValidationPipe(idSchema);
-const suspendSchema = z.object({ isSuspended: z.boolean() });
-const activeSchema = z.object({ isActive: z.boolean() });
+const updateOrganizationSchema = z
+  .object({ name: z.string().trim().min(2).max(100), isSuspended: z.boolean() })
+  .partial()
+  .strict();
+const updateUserSchema = z
+  .object({
+    name: z.string().trim().min(2).max(100),
+    isActive: z.boolean(),
+    isSuperAdmin: z.boolean(),
+  })
+  .partial()
+  .strict();
 
 @ApiTags('admin')
 @ApiBearerAuth()
@@ -33,9 +43,17 @@ export class AdminController {
   @ResponseMessage('Organization updated')
   updateOrganization(
     @Param('id', IdParam) id: string,
-    @Body(new ZodValidationPipe(suspendSchema)) body: z.infer<typeof suspendSchema>,
+    @Body(new ZodValidationPipe(updateOrganizationSchema))
+    body: z.infer<typeof updateOrganizationSchema>,
   ) {
-    return this.admin.setOrganizationSuspended(id, body.isSuspended);
+    return this.admin.updateOrganization(id, body);
+  }
+
+  @Delete('organizations/:id')
+  @ResponseMessage('Organization deleted')
+  async deleteOrganization(@Param('id', IdParam) id: string) {
+    await this.admin.deleteOrganization(id);
+    return null;
   }
 
   @Get('users')
@@ -48,8 +66,15 @@ export class AdminController {
   updateUser(
     @CurrentUser() actor: AuthUser,
     @Param('id', IdParam) id: string,
-    @Body(new ZodValidationPipe(activeSchema)) body: z.infer<typeof activeSchema>,
+    @Body(new ZodValidationPipe(updateUserSchema)) body: z.infer<typeof updateUserSchema>,
   ) {
-    return this.admin.setUserActive(actor.userId, id, body.isActive);
+    return this.admin.updateUser(actor.userId, id, body);
+  }
+
+  @Delete('users/:id')
+  @ResponseMessage('User deleted')
+  async deleteUser(@CurrentUser() actor: AuthUser, @Param('id', IdParam) id: string) {
+    await this.admin.deleteUser(actor.userId, id);
+    return null;
   }
 }

@@ -25,6 +25,10 @@ export class User {
   @Prop({ type: Date, default: null })
   lastLoginAt!: Date | null;
 
+  /** Deleted by a Super Admin; the email is released so it can sign up again. */
+  @Prop({ type: Date, default: null })
+  deletedAt!: Date | null;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

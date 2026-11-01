@@ -29,6 +29,10 @@ export class Organization {
   @Prop({ default: false })
   isSuspended!: boolean;
 
+  /** Deleted by a Super Admin: kept for the record, hidden and inaccessible. */
+  @Prop({ type: Date, default: null })
+  deletedAt!: Date | null;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

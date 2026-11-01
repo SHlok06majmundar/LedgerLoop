@@ -43,7 +43,7 @@ export class MembershipsService {
   listForUser(userId: string) {
     return this.memberships
       .find({ userId, status: MemberStatus.ACTIVE })
-      .populate('organizationId')
+      .populate({ path: 'organizationId', match: { deletedAt: null } })
       .sort({ createdAt: 1 })
       .exec();
   }

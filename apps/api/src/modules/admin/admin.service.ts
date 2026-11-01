@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { InvoiceStatus, MemberStatus, PaymentStatus } from '@ledgerloop/shared-types';
+import { InvoiceStatus, MemberStatus, PaymentStatus, Role } from '@ledgerloop/shared-types';
 import type { PaginationQuery } from '@ledgerloop/validation';
 import { Types, type Model } from 'mongoose';
 import { notFound, unprocessable } from '../../common/errors/app-exception';
 import { escapeRegex } from '../../database/paginate';
 import { Paginated } from '../../common/http/paginated';
+import { TransactionRunner } from '../../database/transaction-runner';
 import { SessionsService } from '../auth/sessions.service';
 import { Invoice } from '../invoices/invoice.schema';
 import { Membership } from '../organizations/schemas/membership.schema';
@@ -13,6 +14,9 @@ import { Organization } from '../organizations/schemas/organization.schema';
 import { Payment } from '../payments/schemas/payment.schema';
 import { User } from '../users/user.schema';
 import { toPublicUser } from '../users/users.service';
+
+/** Records a Super Admin has not deleted. */
+const LIVE = { deletedAt: null };
 
 /** Platform-wide administration across all organizations. */
 @Injectable()
@@ -24,17 +28,18 @@ export class AdminService {
     @InjectModel(Invoice.name) private readonly invoices: Model<Invoice>,
     @InjectModel(Payment.name) private readonly payments: Model<Payment>,
     private readonly sessions: SessionsService,
+    private readonly tx: TransactionRunner,
   ) {}
 
   async stats() {
     const since = new Date(Date.now() - 30 * 86_400_000);
     const [organizations, suspended, users, activeUsers, newUsers, invoiceTotals, paymentTotals] =
       await Promise.all([
-        this.organizations.countDocuments(),
-        this.organizations.countDocuments({ isSuspended: true }),
-        this.users.countDocuments(),
-        this.users.countDocuments({ lastLoginAt: { $gte: since } }),
-        this.users.countDocuments({ createdAt: { $gte: since } }),
+        this.organizations.countDocuments(LIVE),
+        this.organizations.countDocuments({ ...LIVE, isSuspended: true }),
+        this.users.countDocuments(LIVE),
+        this.users.countDocuments({ ...LIVE, lastLoginAt: { $gte: since } }),
+        this.users.countDocuments({ ...LIVE, createdAt: { $gte: since } }),
         this.invoices.aggregate<{ count: number; total: number }>([
           { $match: { status: { $nin: [InvoiceStatus.DRAFT, InvoiceStatus.VOID] } } },
           { $group: { _id: null, count: { $sum: 1 }, total: { $sum: '$totalMinor' } } },
@@ -69,7 +74,9 @@ export class AdminService {
   }
 
   async listOrganizations(query: PaginationQuery) {
-    const filter = query.search ? { name: new RegExp(escapeRegex(query.search), 'i') } : {};
+    const filter = query.search
+      ? { ...LIVE, name: new RegExp(escapeRegex(query.search), 'i') }
+      : LIVE;
     const [rows, total] = await Promise.all([
       this.organizations
         .aggregate([
@@ -127,12 +134,27 @@ export class AdminService {
     return new Paginated(rows, total, query.page, query.limit);
   }
 
-  async setOrganizationSuspended(organizationId: string, isSuspended: boolean) {
+  async updateOrganization(
+    organizationId: string,
+    input: { name?: string; isSuspended?: boolean },
+  ) {
     const organization = await this.organizations
-      .findByIdAndUpdate(organizationId, { isSuspended }, { new: true })
+      .findOneAndUpdate({ _id: organizationId, ...LIVE }, input, { new: true })
       .exec();
     if (!organization) throw notFound('Organization');
     return organization;
+  }
+
+  /** Soft-deletes an organization: its data stays for the record, nobody can reach it. */
+  async deleteOrganization(organizationId: string) {
+    const organization = await this.organizations
+      .findOneAndUpdate(
+        { _id: organizationId, ...LIVE },
+        { deletedAt: new Date(), isSuspended: true },
+        { new: true },
+      )
+      .exec();
+    if (!organization) throw notFound('Organization');
   }
 
   async listUsers(query: PaginationQuery) {
@@ -142,8 +164,9 @@ export class AdminService {
             { name: new RegExp(escapeRegex(query.search), 'i') },
             { email: new RegExp(escapeRegex(query.search), 'i') },
           ],
+          ...LIVE,
         }
-      : {};
+      : LIVE;
     const [users, total] = await Promise.all([
       this.users
         .find(filter)
@@ -171,13 +194,82 @@ export class AdminService {
   }
 
   /** Deactivating a user ends all of their sessions at once. */
-  async setUserActive(actorId: string, userId: string, isActive: boolean) {
-    if (actorId === userId && !isActive) {
+  async updateUser(
+    actorId: string,
+    userId: string,
+    input: { name?: string; isActive?: boolean; isSuperAdmin?: boolean },
+  ) {
+    if (actorId === userId && input.isActive === false) {
       throw unprocessable('CANNOT_DEACTIVATE_SELF', 'You cannot deactivate your own account');
     }
-    const user = await this.users.findByIdAndUpdate(userId, { isActive }, { new: true }).exec();
+    if (actorId === userId && input.isSuperAdmin === false) {
+      throw unprocessable('CANNOT_DEMOTE_SELF', 'You cannot remove your own Super Admin access');
+    }
+    const user = await this.users
+      .findOneAndUpdate({ _id: userId, ...LIVE }, input, { new: true })
+      .exec();
     if (!user) throw notFound('User');
-    if (!isActive) await this.sessions.revokeAll(userId);
+    if (input.isActive === false) await this.sessions.revokeAll(userId);
     return toPublicUser(user);
+  }
+
+  /**
+   * Soft-deletes a user and the organizations only they belong to, and releases
+   * their email. An owner of a team must hand it over or delete it first.
+   */
+  async deleteUser(actorId: string, userId: string) {
+    if (actorId === userId) {
+      throw unprocessable('CANNOT_DELETE_SELF', 'You cannot delete your own account');
+    }
+    await this.tx.run(async (session) => {
+      const user = await this.users
+        .findOne({ _id: userId, ...LIVE })
+        .session(session)
+        .exec();
+      if (!user) throw notFound('User');
+      const owned = await this.memberships
+        .find({ userId: user._id, role: Role.OWNER, status: MemberStatus.ACTIVE })
+        .session(session)
+        .exec();
+      const soloOrganizations: Types.ObjectId[] = [];
+      for (const membership of owned) {
+        const others = await this.memberships
+          .countDocuments({
+            organizationId: membership.organizationId,
+            userId: { $ne: user._id },
+            status: MemberStatus.ACTIVE,
+          })
+          .session(session);
+        if (others > 0) {
+          throw unprocessable(
+            'USER_OWNS_TEAM',
+            'This user owns an organization with other members; transfer or delete it first',
+          );
+        }
+        soloOrganizations.push(membership.organizationId);
+      }
+      const now = new Date();
+      await this.organizations.updateMany(
+        { _id: { $in: soloOrganizations }, ...LIVE },
+        { deletedAt: now, isSuspended: true },
+        { session },
+      );
+      await this.memberships.updateMany(
+        { userId: user._id },
+        { status: MemberStatus.DISABLED },
+        { session },
+      );
+      await this.users.updateOne(
+        { _id: user._id },
+        {
+          deletedAt: now,
+          isActive: false,
+          isSuperAdmin: false,
+          email: `deleted-${user.id as string}@deleted.ledgerloop.invalid`,
+        },
+        { session },
+      );
+    });
+    await this.sessions.revokeAll(userId);
   }
 }
