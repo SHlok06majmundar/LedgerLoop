@@ -8,3 +8,7 @@ onlyBuiltDependencies:
   - sharp
   - '@nestjs/core'
   - '@node-rs/argon2'
+
+# React 19 everywhere: Recharts 2 misplaces and drops chart bars with react-is 18.
+overrides:
+  react-is: ^19.0.0
