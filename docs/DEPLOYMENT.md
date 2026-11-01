@@ -11,6 +11,23 @@
 
 The uploads disk can attach to only one Render service, so the job worker runs inside the API service. The scheduler only enqueues jobs and needs no disk. See ADR 0007.
 
+## Free demo on Render
+
+`render.yaml` describes two free web services: `ledgerloop-api` (job worker and
+scheduler in-process, `TRUST_PROXY_HOPS=1`) and `ledgerloop-web`. Free services
+sleep after 15 idle minutes (the first request takes about a minute) and have no
+disk, so uploaded files do not survive a restart; data in Atlas does.
+
+1. New → Blueprint → pick this repository.
+2. Fill the `sync: false` values: Atlas URI, SMTP, `WEB_ORIGINS` and `APP_URL`
+   (the web service URL), and `NEXT_PUBLIC_API_URL` (the API service URL).
+3. In Atlas → Network Access allow `0.0.0.0/0`: free services have no fixed outbound IP.
+
+The web app and API are on different `onrender.com` sites, so the refresh cookie
+is cross-site. Safari blocks such cookies, so Safari users sign in again after a
+reload. Serving both from one custom domain (`app.` and `api.`) with
+`COOKIE_DOMAIN` fixes this.
+
 ## API on Render
 
 1. Create the services from `render.yaml` (New → Blueprint), or create them by hand with the same commands.

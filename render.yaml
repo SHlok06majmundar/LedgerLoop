@@ -1,28 +1,30 @@
-# Render blueprint: API (with the job worker and the upload disk) + one scheduler.
+# Render blueprint (free plan): the API runs the job worker and the scheduler
+# in-process, and the web app is a second web service.
+# Free services sleep after 15 idle minutes and have no persistent disk, so
+# uploaded files are lost on restart (all data lives in MongoDB Atlas).
+# For production, switch to `plan: starter`, add a disk at /var/data with
+# UPLOAD_DIR=/var/data/uploads, and move the scheduler to its own worker.
 # Set the `sync: false` values in the Render dashboard; never commit secrets.
 services:
   - type: web
     name: ledgerloop-api
     runtime: node
     region: singapore
-    plan: starter
-    rootDir: .
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter "./packages/*" build && pnpm --filter @ledgerloop/api build
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --filter "@ledgerloop/api..." && pnpm --filter "@ledgerloop/api^..." build && pnpm --filter @ledgerloop/api build
     startCommand: node apps/api/dist/main.js
     healthCheckPath: /health
-    disk:
-      name: uploads
-      mountPath: /var/data
-      sizeGB: 5
     envVars:
+      - key: NODE_VERSION
+        value: '22'
       - key: NODE_ENV
         value: production
       - key: RUN_WORKER
         value: 'true'
       - key: RUN_SCHEDULER
-        value: 'false'
-      - key: UPLOAD_DIR
-        value: /var/data/uploads
+        value: 'true'
+      - key: TRUST_PROXY_HOPS
+        value: '1'
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DB
@@ -48,33 +50,15 @@ services:
       - key: LOG_LEVEL
         value: info
 
-  - type: worker
-    name: ledgerloop-scheduler
+  - type: web
+    name: ledgerloop-web
     runtime: node
     region: singapore
-    plan: starter
-    rootDir: .
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter "./packages/*" build && pnpm --filter @ledgerloop/api build
-    startCommand: node apps/api/dist/scheduler.js
+    plan: free
+    buildCommand: corepack enable && pnpm install --frozen-lockfile --filter "@ledgerloop/web..." && pnpm --filter "@ledgerloop/web^..." build && pnpm --filter @ledgerloop/web build
+    startCommand: pnpm --filter @ledgerloop/web exec next start --port $PORT
     envVars:
-      - fromGroup: ledgerloop-shared
-
-envVarGroups:
-  - name: ledgerloop-shared
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: MONGODB_URI
-        sync: false
-      - key: MONGODB_DB
-        value: ledgerloop
-      - key: JWT_ACCESS_SECRET
-        sync: false
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_USER
-        sync: false
-      - key: SMTP_PASS
-        sync: false
-      - key: EMAIL_FROM
+      - key: NODE_VERSION
+        value: '22'
+      - key: NEXT_PUBLIC_API_URL
         sync: false
