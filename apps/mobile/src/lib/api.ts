@@ -144,7 +144,10 @@ async function request(path: string, options: Options) {
   }
   const body = await res.json().catch(() => null);
   if (!res.ok) {
-    throw new ApiError(res.status, body?.errorCode ?? 'NETWORK_ERROR', body?.message ?? 'Something went wrong');
+    // Validation errors carry the field-level reason in `details`; show the first one.
+    const detail = Array.isArray(body?.details) ? body.details[0] : undefined;
+    const message = detail?.message ? `${detail.field ? `${detail.field}: ` : ''}${detail.message}` : body?.message;
+    throw new ApiError(res.status, body?.errorCode ?? 'NETWORK_ERROR', message ?? 'Something went wrong');
   }
   return body;
 }

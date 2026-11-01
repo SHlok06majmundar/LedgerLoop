@@ -59,6 +59,7 @@ const TONES: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'muted'>
   OVERDUE: 'danger',
   DISCREPANCY: 'danger',
   FAILED: 'danger',
+  REVERSED: 'danger',
   ISSUED: 'info',
   SUGGESTED: 'info',
   SCHEDULED: 'info',

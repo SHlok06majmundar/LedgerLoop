@@ -19,6 +19,7 @@ export interface Invoice {
   subtotalMinor: number;
   taxMinor: number;
   discountMinor: number;
+  voidReason?: string;
 }
 
 export interface Customer {
@@ -28,6 +29,32 @@ export interface Customer {
   phone?: string;
   gstin?: string;
   paymentTermsDays: number;
+  notes?: string;
+  archivedAt?: string | null;
+}
+
+export interface Payment {
+  id: string;
+  paymentNumber: string;
+  customerId: Ref | string;
+  amountMinor: number;
+  allocatedMinor: number;
+  unallocatedMinor: number;
+  method: string;
+  reference?: string;
+  paymentDate: string;
+  notes?: string;
+  status: string;
+  bankTransactionId: string | null;
+  reversedAt: string | null;
+  reversalReason?: string;
+}
+
+export interface PaymentAllocation {
+  id: string;
+  amountMinor: number;
+  status: string;
+  invoiceId: { id: string; invoiceNumber: string; status: string } | string;
 }
 
 export interface Match {
