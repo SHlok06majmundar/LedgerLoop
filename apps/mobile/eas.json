@@ -12,13 +12,13 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.29.206:4000"
+        "EXPO_PUBLIC_API_URL": "https://ledgerloop-api-5erw.onrender.com"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://api.ledgerloop.in"
+        "EXPO_PUBLIC_API_URL": "https://ledgerloop-api-5erw.onrender.com"
       }
     }
   },
