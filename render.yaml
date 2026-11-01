@@ -23,8 +23,9 @@ services:
         value: 'true'
       - key: RUN_SCHEDULER
         value: 'true'
+      # Client, Cloudflare, then Render's internal proxy in X-Forwarded-For.
       - key: TRUST_PROXY_HOPS
-        value: '1'
+        value: '3'
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DB

@@ -14,7 +14,7 @@ The uploads disk can attach to only one Render service, so the job worker runs i
 ## Free demo on Render
 
 `render.yaml` describes two free web services: `ledgerloop-api` (job worker and
-scheduler in-process, `TRUST_PROXY_HOPS=1`) and `ledgerloop-web`. Free services
+scheduler in-process, `TRUST_PROXY_HOPS=3`) and `ledgerloop-web`. Free services
 sleep after 15 idle minutes (the first request takes about a minute) and have no
 disk, so uploaded files do not survive a restart; data in Atlas does.
 
