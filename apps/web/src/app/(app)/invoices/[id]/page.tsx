@@ -2,8 +2,9 @@
 
 import { Permission } from '@ledgerloop/shared-types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BellOff, BellRing, Ban, Download, Mail, MoreHorizontal, Pencil, Send, Wallet } from 'lucide-react';
+import { BellOff, BellRing, Ban, Download, Mail, MoreHorizontal, Pencil, Send, Trash2, Wallet } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { use, useState } from 'react';
 import { toast } from 'sonner';
 import { ActivityFeed } from '@/components/app/activity-feed';
@@ -40,7 +41,8 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
   const canPay = useCan(Permission.PAYMENTS_WRITE);
   const canCollect = useCan(Permission.COLLECTIONS_MANAGE);
   const canAudit = useCan(Permission.AUDIT_READ);
-  const [dialog, setDialog] = useState<'send' | 'void' | null>(null);
+  const router = useRouter();
+  const [dialog, setDialog] = useState<'send' | 'void' | 'delete' | null>(null);
   const [sendTo, setSendTo] = useState('');
   const [message, setMessage] = useState('');
   const [voidReason, setVoidReason] = useState('');
@@ -67,6 +69,15 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
       toast.success(v.success);
       setDialog(null);
       refresh();
+    },
+    onError: (e) => applyApiError(e),
+  });
+  const remove = useMutation({
+    mutationFn: () => api(`/invoices/${id}`, { method: 'DELETE' }),
+    onSuccess: () => {
+      toast.success('Draft deleted');
+      refresh();
+      router.push('/invoices');
     },
     onError: (e) => applyApiError(e),
   });
@@ -128,7 +139,7 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                 </Link>
               </Button>
             )}
-            {(canVoid || canCollect) && inv.status !== 'VOID' && (
+            {(canVoid || canCollect || canWrite) && inv.status !== 'VOID' && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" aria-label="More actions">
@@ -149,9 +160,14 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
                       {inv.remindersPaused ? 'Resume reminders' : 'Pause reminders'}
                     </DropdownMenuItem>
                   )}
-                  {canVoid && (
+                  {canVoid && inv.status !== 'DRAFT' && (
                     <DropdownMenuItem className="text-danger" onSelect={() => setDialog('void')}>
                       <Ban /> Void invoice
+                    </DropdownMenuItem>
+                  )}
+                  {canWrite && inv.status === 'DRAFT' && (
+                    <DropdownMenuItem className="text-danger" onSelect={() => setDialog('delete')}>
+                      <Trash2 /> Delete draft
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -365,6 +381,22 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
               onClick={() => action.mutate({ path: `/invoices/${id}/void`, body: { reason: voidReason }, success: 'Invoice voided' })}
             >
               Void invoice
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialog === 'delete'} onOpenChange={(o) => setDialog(o ? 'delete' : null)}>
+        <DialogContent
+          title={`Delete draft ${inv.invoiceNumber}?`}
+          description="The draft was never issued, so it is removed for good. The activity log keeps a record of the deletion."
+        >
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialog(null)}>
+              Keep draft
+            </Button>
+            <Button variant="danger" loading={remove.isPending} onClick={() => remove.mutate()}>
+              <Trash2 /> Delete draft
             </Button>
           </DialogFooter>
         </DialogContent>
