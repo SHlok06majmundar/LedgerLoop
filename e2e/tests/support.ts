@@ -6,7 +6,16 @@ import { join } from 'node:path';
 export const API = 'http://localhost:4000/api/v1';
 
 /** The account requested for manual testing; created through the mobile app. */
-export const SHLOK = { name: 'Shlok', email: 'shlok@gmail.com', password: '1234567890Ab' };
+/** Credentials come from the environment (E2E_ACCOUNT_EMAIL / E2E_ACCOUNT_PASSWORD); never commit them. */
+export const SHLOK = {
+  name: 'Shlok',
+  email: process.env.E2E_ACCOUNT_EMAIL ?? 'shlok@gmail.com',
+  get password(): string {
+    const value = process.env.E2E_ACCOUNT_PASSWORD;
+    if (!value) throw new Error('Set E2E_ACCOUNT_PASSWORD to run the mobile and admin browser tests');
+    return value;
+  },
+};
 
 /** Unique, deliverable test addresses (Gmail plus-addressing to the project inbox). */
 export const testEmail = (tag: string) => `majmundarshlok06+e2e-${tag}-${Date.now()}@gmail.com`;
