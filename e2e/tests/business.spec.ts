@@ -194,6 +194,42 @@ test('runs collections, saves the schedule and sends a manual reminder', async (
   await expectToast(page, 'Reminder is being sent');
 });
 
+test('edits the details of a payment', async () => {
+  await page.goto(`/payments/new?customerId=${customerUrl.split('/').pop()}`);
+  await page.getByLabel('Amount received (₹)').fill('25');
+  await page.getByLabel('Reference').fill(`TYPO${run}`);
+  await page.getByRole('button', { name: 'Record payment' }).click();
+  await page.waitForURL(/\/payments\/[a-f\d]{24}$/);
+
+  await page.getByRole('button', { name: 'Edit details' }).click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Method').selectOption('UPI');
+  await dialog.getByLabel('Reference (UTR / cheque no.)').fill(`FIXED${run}`);
+  await dialog.getByLabel('Notes').fill('Customer sent the corrected UTR');
+  await dialog.getByRole('button', { name: 'Save changes' }).click();
+  await expectToast(page, 'Payment updated');
+  await expect(page.getByText(`FIXED${run}`).first()).toBeVisible();
+  await expect(page.getByText('Customer sent the corrected UTR')).toBeVisible();
+});
+
+test('deletes a draft invoice', async () => {
+  await page.goto(customerUrl);
+  await page.getByRole('link', { name: 'New invoice' }).click();
+  await page.getByLabel('Line 1 description').fill('Sample order, not confirmed');
+  await page.getByLabel('Line 1 quantity').fill('1');
+  await page.getByLabel('Line 1 unit price').fill('500');
+  await page.getByRole('button', { name: 'Save as draft' }).click();
+  await page.waitForURL(/\/invoices\/[a-f\d]{24}$/);
+  await expect(page.getByText('Draft', { exact: true }).first()).toBeVisible();
+
+  await page.getByRole('button', { name: 'More actions' }).click();
+  await expect(page.getByRole('menuitem', { name: 'Void invoice' })).toHaveCount(0);
+  await page.getByRole('menuitem', { name: 'Delete draft' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete draft' }).click();
+  await expectToast(page, 'Draft deleted');
+  await page.waitForURL(/\/invoices$/);
+});
+
 test('voids the unpaid invoice with a reason', async () => {
   await page.goto(firstInvoiceUrl);
   await page.getByRole('button', { name: 'More actions' }).click();

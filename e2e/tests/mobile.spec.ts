@@ -90,6 +90,58 @@ test('records a payment that pays the invoice off', async () => {
   await expect(shown(page.getByText(new RegExp(`INV-\\d{4}-\\d{4} · Mobile Customer ${run}`)))).toBeVisible();
 });
 
+test('adds, edits, archives and restores a customer', async () => {
+  // The app confirms destructive actions and reports results with browser dialogs.
+  page.on('dialog', (dialog) => void dialog.accept());
+  await page.goto('/customers');
+  await shown(page.getByRole('button', { name: 'Add customer' })).click();
+  await shown(page.getByLabel('Customer name')).fill(`App Customer ${run}`);
+  await shown(page.getByLabel('Phone')).fill('+91 99887 76655');
+  await shown(page.getByRole('button', { name: 'Add customer' })).click();
+  await page.waitForURL(/\/customer\/[a-f\d]{24}$/);
+  await expect(shown(page.getByText(`App Customer ${run}`))).toBeVisible();
+
+  await shown(page.getByRole('button', { name: 'Edit customer' })).click();
+  await shown(page.getByLabel('Customer name')).fill(`App Customer ${run} Ltd`);
+  await shown(page.getByRole('button', { name: 'Save changes' })).click();
+  await expect(shown(page.getByText(`App Customer ${run} Ltd`))).toBeVisible();
+
+  await shown(page.getByRole('button', { name: 'Archive customer' })).click();
+  await expect(shown(page.getByText(/Archived on/))).toBeVisible();
+  await shown(page.getByRole('button', { name: 'Restore customer' })).click();
+  await expect(page.getByText(/Archived on/).filter({ visible: true })).toHaveCount(0);
+});
+
+test('edits a payment and deletes a draft invoice', async ({ request }) => {
+  await page.goto('/customers');
+  await shown(page.getByLabel('Search customers')).fill(`Mobile Customer ${run}`);
+  await shown(page.getByText(`Mobile Customer ${run}`)).click();
+  await shown(page.getByText(new RegExp(`MOB${run}`))).click();
+  await page.waitForURL(/\/payment\/[a-f\d]{24}$/);
+  await shown(page.getByRole('button', { name: 'Edit details' })).click();
+  await shown(page.getByLabel('Notes')).fill('Collected by the field team');
+  await shown(page.getByRole('button', { name: 'Save' })).click();
+  await expect(shown(page.getByText('Collected by the field team'))).toBeVisible();
+
+  const headers = await apiAs(request);
+  const customers = await request.get(`${API}/customers?search=${run}`, { headers });
+  const customerId = (await customers.json()).data[0].id as string;
+  const draft = await request.post(`${API}/invoices`, {
+    headers,
+    data: {
+      customerId,
+      issueDate: new Date().toISOString().slice(0, 10),
+      items: [{ description: 'Quote only', quantityMilli: 1000, unitPriceMinor: 10_000 }],
+    },
+  });
+  const draftId = (await draft.json()).data.id as string;
+  await page.goto(`/invoice/${draftId}`);
+  await shown(page.getByRole('button', { name: 'Delete draft' })).click();
+  await expect
+    .poll(async () => (await request.get(`${API}/invoices/${draftId}`, { headers })).status())
+    .toBe(404);
+});
+
 test('home, reconcile and more tabs work', async () => {
   await page.goto('/');
   await expect(shown(page.getByText('Outstanding by age'))).toBeVisible();
