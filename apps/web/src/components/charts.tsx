@@ -157,6 +157,8 @@ export function MoneyBarChart<T extends Record<string, string | number>>({
                   fill={s.color}
                   radius={[4, 4, 0, 0]}
                   maxBarSize={22}
+                  // Bars appear in place: no slide-in when the container measures itself.
+                  isAnimationActive={false}
                   stroke="var(--card)"
                   strokeWidth={1}
                 />
