@@ -14,7 +14,6 @@
     },
     "android": {
       "package": "app.ledgerloop.mobile",
-      "edgeToEdgeEnabled": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f766e"
