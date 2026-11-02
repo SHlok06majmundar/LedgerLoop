@@ -1,55 +1,72 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Text, View } from 'react-native';
-import { Button, Input, LogoBadge, SafeScreen } from '@/components/ui';
-import { api, ApiError, signIn } from '@/lib/api';
-import { useSession } from '@/lib/session';
+import { useRef, useState } from 'react';
+import { Text, View } from 'react-native';
+import { Button, FormScreen, Input, LogoBadge, PasswordInput, type TextField } from '@/components/ui';
+import { ApiError, signIn } from '@/lib/api';
 import { useTheme } from '@/theme';
-
-interface Membership {
-  organization: { id: string };
-}
 
 export default function LoginScreen() {
   const t = useTheme();
+  const passwordRef = useRef<TextField>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const canSubmit = email.trim().length > 0 && password.length > 0 && !busy;
 
   const submit = async () => {
+    if (!canSubmit) return;
     setError('');
     setBusy(true);
     try {
+      // The session gate opens the app once the session is stored.
       await signIn(email.trim(), password);
-      const memberships = await api<Membership[]>('/organizations', { noOrg: true });
-      const current = useSession.getState().organizationId;
-      if (memberships.length && !memberships.some((m) => m.organization.id === current)) {
-        await useSession.getState().setOrganization(memberships[0]!.organization.id);
-      }
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not reach LedgerLoop. Check your connection.');
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <SafeScreen>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, justifyContent: 'center', padding: 24, gap: 16 }}>
-        <View style={{ gap: 6, marginBottom: 12 }}>
-          <View style={{ marginBottom: 12 }}>
-            <LogoBadge />
-          </View>
-          <Text style={{ color: t.text, fontSize: 28, fontWeight: '700' }}>LedgerLoop</Text>
-          <Text style={{ color: t.muted, fontSize: 15 }}>Sign in to see what is owed and what has been paid.</Text>
+    <FormScreen>
+      <View style={{ gap: 6, marginBottom: 12 }}>
+        <View style={{ marginBottom: 12 }}>
+          <LogoBadge />
         </View>
-        <Input label="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress" />
-        <Input label="Password" value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" textContentType="password" onSubmitEditing={submit} />
-        {error ? <Text style={{ color: t.danger }}>{error}</Text> : null}
-        <Button title="Sign in" onPress={submit} loading={busy} disabled={!email || !password} />
-        <Button title="Create an account" variant="outline" onPress={() => router.replace('/register')} />
-      </KeyboardAvoidingView>
-    </SafeScreen>
+        <Text style={{ color: t.text, fontSize: 28, fontWeight: '700' }}>LedgerLoop</Text>
+        <Text style={{ color: t.muted, fontSize: 15 }}>Sign in to see what is owed and what has been paid.</Text>
+      </View>
+      <Input
+        label="Email"
+        value={email}
+        onChangeText={setEmail}
+        autoCapitalize="none"
+        autoCorrect={false}
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => passwordRef.current?.focus()}
+      />
+      <PasswordInput
+        ref={passwordRef}
+        label="Password"
+        value={password}
+        onChangeText={setPassword}
+        autoComplete="password"
+        textContentType="password"
+        returnKeyType="go"
+        onSubmitEditing={submit}
+      />
+      {error ? (
+        <Text accessibilityRole="alert" style={{ color: t.danger }}>
+          {error}
+        </Text>
+      ) : null}
+      <Button title="Sign in" onPress={submit} loading={busy} disabled={!email.trim() || !password} />
+      <Button title="Create an account" variant="outline" onPress={() => router.replace('/register')} />
+    </FormScreen>
   );
 }

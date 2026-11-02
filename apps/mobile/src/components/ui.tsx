@@ -1,10 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import type { ComponentProps, ReactNode } from 'react';
+import { useState, type ComponentProps, type ComponentRef, type ReactNode, type Ref } from 'react';
 import {
   ActivityIndicator,
   Image,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -15,12 +13,15 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { humanize } from '@/lib/format';
 import { statusColors, useTheme } from '@/theme';
 import { SkeletonDetail } from './skeleton';
 
 export type IconName = ComponentProps<typeof Ionicons>['name'];
+/** What a ref to one of the text fields below points at (for moving focus). */
+export type TextField = ComponentRef<typeof TextInput>;
 
 export function Screen({
   children,
@@ -37,29 +38,40 @@ export function Screen({
   if (!scroll) {
     return <View style={{ flex: 1, backgroundColor: t.background, padding: 16 }}>{children}</View>;
   }
-  // Forms live inside every screen, so every screen keeps focused inputs above the keyboard.
+  // Forms live inside every screen, so every screen scrolls the focused input above the keyboard.
   return (
-    <KeyboardAvoidingView
+    <KeyboardAwareScrollView
       style={{ flex: 1, backgroundColor: t.background }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
+      bottomOffset={24}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={t.primary} /> : undefined}
     >
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        refreshControl={onRefresh ? <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} tintColor={t.primary} /> : undefined}
-      >
-        {children}
-      </ScrollView>
-    </KeyboardAvoidingView>
+      {children}
+    </KeyboardAwareScrollView>
   );
 }
 
 export function SafeScreen({ children }: { children: ReactNode }) {
   const t = useTheme();
   return <SafeAreaView style={{ flex: 1, backgroundColor: t.background }}>{children}</SafeAreaView>;
+}
+
+/** Full-screen centred form (sign in, sign up) that keeps the focused field above the keyboard. */
+export function FormScreen({ children }: { children: ReactNode }) {
+  return (
+    <SafeScreen>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24, gap: 16 }}
+        bottomOffset={32}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+      >
+        {children}
+      </KeyboardAwareScrollView>
+    </SafeScreen>
+  );
 }
 
 export function Card({ children, style }: { children: ReactNode; style?: ViewStyle }) {
@@ -134,17 +146,56 @@ export function Button({
   );
 }
 
-export function Input({ label, error, ...props }: TextInputProps & { label: string; error?: string }) {
+export function Input({ label, error, ref, ...props }: TextInputProps & { label: string; error?: string; ref?: Ref<TextField> }) {
   const t = useTheme();
   return (
     <View style={{ gap: 6 }}>
       <Label>{label}</Label>
       <TextInput
+        ref={ref}
         placeholderTextColor={t.muted}
         accessibilityLabel={label}
         style={[styles.input, { color: t.text, borderColor: error ? t.danger : t.input, backgroundColor: t.card }]}
         {...props}
       />
+      {error ? <Text style={{ color: t.danger, fontSize: 12 }}>{error}</Text> : null}
+    </View>
+  );
+}
+
+/** Password field with a button to show or hide what has been typed. */
+export function PasswordInput({
+  label,
+  error,
+  ref,
+  ...props
+}: Omit<TextInputProps, 'secureTextEntry'> & { label: string; error?: string; ref?: Ref<TextField> }) {
+  const t = useTheme();
+  const [visible, setVisible] = useState(false);
+  return (
+    <View style={{ gap: 6 }}>
+      <Label>{label}</Label>
+      <View style={[styles.input, styles.passwordBox, { borderColor: error ? t.danger : t.input, backgroundColor: t.card }]}>
+        <TextInput
+          ref={ref}
+          placeholderTextColor={t.muted}
+          accessibilityLabel={label}
+          autoCapitalize="none"
+          autoCorrect={false}
+          style={{ flex: 1, color: t.text, fontSize: 16, paddingVertical: 12 }}
+          {...props}
+          secureTextEntry={!visible}
+        />
+        <Pressable
+          onPress={() => setVisible((v) => !v)}
+          accessibilityRole="button"
+          accessibilityLabel={visible ? 'Hide password' : 'Show password'}
+          hitSlop={12}
+          style={{ paddingLeft: 10 }}
+        >
+          <Ionicons name={visible ? 'eye-off-outline' : 'eye-outline'} size={22} color={t.muted} />
+        </Pressable>
+      </View>
       {error ? <Text style={{ color: t.danger, fontSize: 12 }}>{error}</Text> : null}
     </View>
   );
@@ -270,5 +321,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   input: { minHeight: 48, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, fontSize: 16 },
+  passwordBox: { flexDirection: 'row', alignItems: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth },
 });
