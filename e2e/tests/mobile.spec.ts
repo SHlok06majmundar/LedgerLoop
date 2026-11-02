@@ -163,7 +163,13 @@ test('signs out and the session ends', async () => {
 
 test('signs back in and the login is restored after a reload', async () => {
   await shown(page.getByLabel('Email')).fill(SHLOK.email);
-  await shown(page.getByLabel('Password')).fill(SHLOK.password);
+  const password = shown(page.getByLabel('Password', { exact: true }));
+  await password.fill(SHLOK.password);
+  await expect(password).toHaveAttribute('type', 'password');
+  await shown(page.getByRole('button', { name: 'Show password' })).click();
+  await expect(password).not.toHaveAttribute('type', 'password');
+  await shown(page.getByRole('button', { name: 'Hide password' })).click();
+  await expect(password).toHaveAttribute('type', 'password');
   await shown(page.getByRole('button', { name: 'Sign in' })).click();
   await expect(shown(page.getByText('Total outstanding'))).toBeVisible();
   await page.reload();
